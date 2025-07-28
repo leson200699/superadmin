@@ -1,0 +1,221 @@
+.main-nav {
+
+  padding: 10px 0;
+
+}
+
+ul {}
+
+.categories-news {
+
+  list-style: none;
+
+  display: flex;
+
+  justify-content: center;
+
+  margin: 0;
+
+}
+
+.categories-item {
+
+  position: relative;
+
+}
+
+.categories-link {
+
+  text-decoration: none;
+
+  color: #000000;
+
+  padding: 10px 15px;
+
+  display: block;
+
+  font-size: 14px;
+
+  transition: background 0.3s;
+
+}
+
+.categories-link:hover {
+
+  color: #e94d65;
+
+}
+
+.dropdown-categories {
+
+  display: none;
+
+  position: absolute;
+
+  top: 100%;
+
+  left: 0;
+
+  background: white;
+
+  list-style: none;
+
+  width: 200px;
+
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  z-index: 1000;
+
+}
+
+.dropdown-categories li {
+
+  border-bottom: 1px solid #ddd;
+
+}
+
+.dropdown-categories li:last-child {
+
+  border-bottom: none;
+
+}
+
+.dropdown-item {
+
+  display: block;
+
+  padding: 10px 15px;
+
+  text-decoration: none;
+
+  color: #333;
+
+  transition: background 0.3s;
+
+}
+
+.dropdown-item:hover {
+
+  color: #e94d65;
+
+}
+
+@media (min-width: 768px) {
+
+  .categories-item:hover .dropdown-categories {
+
+    display: block;
+
+  }
+
+}
+
+.menu-toggle {
+
+  display: none;
+
+  font-size: 24px;
+
+  color: white;
+
+  background: none;
+
+  border: none;
+
+  cursor: pointer;
+
+  padding: 10px;
+
+}
+
+@media (max-width: 767px) {
+
+  .categories-news {
+
+    flex-direction: column;
+
+    display: none;
+
+    background: #333;
+
+    position: absolute;
+
+    width: 100%;
+
+    top: 50px;
+
+    left: 0;
+
+    text-align: center;
+
+    z-index: 1000;
+
+  }
+
+  .categories-news.active {
+
+    display: flex;
+
+  }
+
+  .categories-item {
+
+    width: 100%;
+
+  }
+
+  .categories-link {
+
+    padding: 15px;
+
+    font-size: 18px;
+
+    display: block;
+
+  }
+
+  .dropdown-categories {
+
+    position: relative;
+
+    width: 100%;
+
+    display: none;
+
+    background: #444;
+
+  }
+
+  .categories-item.active .dropdown-categories {
+
+    display: block;
+
+  }
+
+  .dropdown-item {
+
+    color: white;
+
+    padding: 12px;
+
+    display: block;
+
+  }
+
+  .dropdown-item:hover {
+
+    background: #555;
+
+  }
+
+  .menu-toggle {
+
+    display: block;
+
+    position: absolute;
+
+    top: 10px;
+
+    right: 20px;
+
+  }

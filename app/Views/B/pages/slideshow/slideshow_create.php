@@ -1,0 +1,123 @@
+<?= $this->extend('B/master') ?>
+<?= $this->section('css') ?>
+<?= $this->endSection() ?>
+<?= $this->section('content') ?>
+<div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)">
+    <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
+        <?= $title ?>
+    </h1>
+    <?= helper('form') ?>
+                    <?= form_open(route_to('admin-slideshow-create-post'), [csrf_token()]) ?>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white p-5 rounded-lg shadow">
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên<span class="text-red-500">*</span></label>
+                        <input type="text" name="name" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tên...">
+                    </div>
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên [En]<span class="text-red-500">*</span></label>
+                        <input type="text" name="name_en" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tên...">
+                    </div>
+
+
+                     <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">[URL]<span class="text-red-500">*</span></label>
+                        <input type="text" name="link" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tên...">
+                    </div>
+
+                     <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">[Video]<span class="text-red-500">*</span></label>
+                        <input type="text" name="video" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tên...">
+                    </div>
+
+
+
+                    <div class="space-y-6 mb-2">
+                        <div class="bg-white p-5 rounded-lg shadow">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh đại diện</label>
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0 w-28 h-28 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                                    <img x-show="featuredImageUrl" :src="featuredImageUrl" alt="Ảnh đại diện" class="h-full w-full object-cover">
+                                    <span x-show="!featuredImageUrl" class="text-gray-400 text-xs text-center p-2">Chưa chọn ảnh</span>
+                                </div>
+                                <div>
+                                    <button type="button" @click="openFileManager('featured')" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        <i class="fas fa-upload mr-2"></i>Chọn ảnh đại diện
+                                    </button>
+                                    <button type="button" @click="removeImage('featured')" x-show="featuredImageUrl" class="ml-2 text-sm text-red-600 hover:text-red-800">Xóa ảnh</button>
+                                    <input type="hidden" name="thumbnail" x-model="featuredImageUrl">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6 mb-2">
+                        <div class="bg-white p-5 rounded-lg shadow">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                                <textarea name="caption" rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Giới thiệu ngắn về thành viên..."></textarea></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6 mb-2">
+                        <div class="bg-white p-5 rounded-lg shadow">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả [en]</label>
+                                <textarea name="caption_en" rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Giới thiệu ngắn về thành viên..."></textarea></div>
+                        </div>
+                    </div>
+
+
+
+
+
+                    <div class="form-group row d-flex justify-content-center">
+                        <label for="" class="col-sm-2 col-form-label text-right">Trạng thái</label>
+                        <div class="col-sm-6">
+                            <!-- Default inline 1-->
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" class="custom-control-input" id="status_active" name="status" value="1" checked>
+                                <label class="custom-control-label" for="status_active">Mở</label>
+                            </div>
+
+                            <!-- Default inline 2-->
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" class="custom-control-input" id="status_deactive" name="status" value="0">
+                                <label class="custom-control-label" for="status_deactive">Đóng</label>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div>
+                        <button type="submit" name="submit" value="publish" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"><i class="fas fa-save mr-2"></i> Đăng tải
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Nhúng modal đã tách ra -->
+            <div x-html="modalHtml" x-cloak></div>
+        </div>
+    <?= form_close() ?>
+</div>
+<?= $this->endSection() ?>
+<?= $this->section('script') ?>
+<script src="<?php echo  base_url('tinymce/js/tinymce/tinymce.min.js') ?>"></script>
+<script src="<?php echo  base_url('B/assets/js/handle.js') ?>"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.querySelector("form");
+
+    if (form) {
+        form.addEventListener("submit", function(e) {
+            if (typeof tinymce !== "undefined") {
+                tinymce.triggerSave(); // ✅ Ghi nội dung vào textarea trước khi submit
+            }
+        });
+    }
+});
+</script>
+<?= $this->endSection() ?>
