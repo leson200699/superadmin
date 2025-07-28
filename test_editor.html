@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Custom Rich Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="public/B/assets/css/custom-rich-editor.css">
+    <link rel="stylesheet" href="public/B/assets/css/custom-rich-editor-advanced.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Custom Rich Text Editor</h1>
+        
+        <div style="margin-bottom: 20px;">
+            <label>Editor tiếng Việt:</label>
+            <textarea id="content-editor" name="content" 
+                      data-rich-editor 
+                      data-rich-editor-options='{"height": "400px", "placeholder": "Soạn thảo nội dung bài viết...", "toolbar": "full", "allowImageUpload": false}'
+                      style="display: none;"></textarea>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label>Editor tiếng Anh:</label>
+            <textarea id="content-editor-en" name="content_en" 
+                      data-rich-editor 
+                      data-rich-editor-options='{"height": "300px", "placeholder": "Soạn thảo nội dung bài viết tiếng Anh...", "toolbar": "full", "allowImageUpload": false}'
+                      style="display: none;"></textarea>
+        </div>
+
+        <div>
+            <button onclick="showContent()">Xem nội dung</button>
+            <button onclick="testFileManager()">Test File Manager</button>
+        </div>
+        
+        <div id="output" style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;"></div>
+    </div>
+
+    <script src="public/B/assets/js/custom-rich-editor.js"></script>
+    <script src="public/B/assets/js/custom-rich-editor-advanced.js"></script>
+    
+    <script>
+        function showContent() {
+            const editor1 = window.customRichEditors['content-editor'];
+            const editor2 = window.customRichEditors['content-editor-en'];
+            
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <h3>Nội dung Editor 1:</h3>
+                <div>${editor1 ? editor1.getContent() : 'Editor not found'}</div>
+                <h3>Nội dung Editor 2:</h3>
+                <div>${editor2 ? editor2.getContent() : 'Editor not found'}</div>
+            `;
+        }
+        
+        function testFileManager() {
+            // Simulate file manager
+            window.targetCustomEditorId = 'content-editor';
+            window.insertImageToCustomEditor('https://via.placeholder.com/400x200', 'content-editor');
+        }
+    </script>
+</body>
+</html>

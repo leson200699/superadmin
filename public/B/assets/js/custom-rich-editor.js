@@ -41,8 +41,8 @@ class CustomRichEditor {
             <div class="editor-toolbar">
                 ${this.createToolbar()}
             </div>
-            <div class="editor-content" contenteditable="true" style="min-height: ${this.options.height}; outline: none; padding: 15px; border: 1px solid #e1e5e9; border-top: none; background: white; font-family: inherit; line-height: 1.6;">
-                <p>${this.options.placeholder}</p>
+            <div class="editor-content" contenteditable="true" style="min-height: ${this.options.height};">
+                <p class="placeholder" style="color: #999; font-style: italic; margin: 0;">${this.options.placeholder}</p>
             </div>
         `;
 
@@ -55,20 +55,8 @@ class CustomRichEditor {
         this.content = editorContainer.querySelector('.editor-content');
         this.hiddenInput = this.element;
 
-        // Thiết lập style cho toolbar
-        this.toolbar.style.cssText = `
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            padding: 10px;
-            border: 1px solid #e1e5e9;
-            border-bottom: none;
-            background: #f8f9fa;
-            border-radius: 8px 8px 0 0;
-        `;
-
-        // Thiết lập style cho content
-        this.content.style.borderRadius = '0 0 8px 8px';
+        // Set initial placeholder state
+        this.handlePlaceholder();
     }
 
     createToolbar() {
@@ -103,49 +91,49 @@ class CustomRichEditor {
     createToolbarButton(command) {
         const buttons = {
             // History
-            undo: { icon: '↶', title: 'Hoàn tác', cmd: 'undo' },
-            redo: { icon: '↷', title: 'Làm lại', cmd: 'redo' },
+            undo: { icon: '<i class="fas fa-undo"></i>', title: 'Hoàn tác', cmd: 'undo' },
+            redo: { icon: '<i class="fas fa-redo"></i>', title: 'Làm lại', cmd: 'redo' },
             
             // Format
-            bold: { icon: 'B', title: 'Đậm', cmd: 'bold', style: 'font-weight: bold;' },
-            italic: { icon: 'I', title: 'Nghiêng', cmd: 'italic', style: 'font-style: italic;' },
-            underline: { icon: 'U', title: 'Gạch chân', cmd: 'underline', style: 'text-decoration: underline;' },
-            strikethrough: { icon: 'S', title: 'Gạch ngang', cmd: 'strikeThrough', style: 'text-decoration: line-through;' },
+            bold: { icon: '<i class="fas fa-bold"></i>', title: 'Đậm', cmd: 'bold' },
+            italic: { icon: '<i class="fas fa-italic"></i>', title: 'Nghiêng', cmd: 'italic' },
+            underline: { icon: '<i class="fas fa-underline"></i>', title: 'Gạch chân', cmd: 'underline' },
+            strikethrough: { icon: '<i class="fas fa-strikethrough"></i>', title: 'Gạch ngang', cmd: 'strikeThrough' },
             
             // Headings
-            h1: { icon: 'H1', title: 'Tiêu đề 1', cmd: 'formatBlock', value: '<h1>' },
-            h2: { icon: 'H2', title: 'Tiêu đề 2', cmd: 'formatBlock', value: '<h2>' },
-            h3: { icon: 'H3', title: 'Tiêu đề 3', cmd: 'formatBlock', value: '<h3>' },
-            paragraph: { icon: 'P', title: 'Đoạn văn', cmd: 'formatBlock', value: '<p>' },
+            h1: { icon: '<i class="fas fa-heading"></i>', title: 'Tiêu đề 1', cmd: 'formatBlock', value: '<h1>' },
+            h2: { icon: '<i class="fas fa-heading"></i>', title: 'Tiêu đề 2', cmd: 'formatBlock', value: '<h2>' },
+            h3: { icon: '<i class="fas fa-heading"></i>', title: 'Tiêu đề 3', cmd: 'formatBlock', value: '<h3>' },
+            paragraph: { icon: '<i class="fas fa-paragraph"></i>', title: 'Đoạn văn', cmd: 'formatBlock', value: '<p>' },
             
             // Alignment
-            alignLeft: { icon: '≡', title: 'Căn trái', cmd: 'justifyLeft' },
-            alignCenter: { icon: '≣', title: 'Căn giữa', cmd: 'justifyCenter' },
-            alignRight: { icon: '≡', title: 'Căn phải', cmd: 'justifyRight' },
-            alignJustify: { icon: '≣', title: 'Căn đều', cmd: 'justifyFull' },
+            alignLeft: { icon: '<i class="fas fa-align-left"></i>', title: 'Căn trái', cmd: 'justifyLeft' },
+            alignCenter: { icon: '<i class="fas fa-align-center"></i>', title: 'Căn giữa', cmd: 'justifyCenter' },
+            alignRight: { icon: '<i class="fas fa-align-right"></i>', title: 'Căn phải', cmd: 'justifyRight' },
+            alignJustify: { icon: '<i class="fas fa-align-justify"></i>', title: 'Căn đều', cmd: 'justifyFull' },
             
             // Lists
-            insertUnorderedList: { icon: '•', title: 'Danh sách không thứ tự', cmd: 'insertUnorderedList' },
-            insertOrderedList: { icon: '1.', title: 'Danh sách có thứ tự', cmd: 'insertOrderedList' },
+            insertUnorderedList: { icon: '<i class="fas fa-list-ul"></i>', title: 'Danh sách không thứ tự', cmd: 'insertUnorderedList' },
+            insertOrderedList: { icon: '<i class="fas fa-list-ol"></i>', title: 'Danh sách có thứ tự', cmd: 'insertOrderedList' },
             
             // Indent
-            outdent: { icon: '⬅', title: 'Giảm thụt lề', cmd: 'outdent' },
-            indent: { icon: '➡', title: 'Tăng thụt lề', cmd: 'indent' },
+            outdent: { icon: '<i class="fas fa-outdent"></i>', title: 'Giảm thụt lề', cmd: 'outdent' },
+            indent: { icon: '<i class="fas fa-indent"></i>', title: 'Tăng thụt lề', cmd: 'indent' },
             
             // Insert
-            link: { icon: '🔗', title: 'Chèn liên kết', cmd: 'createLink', custom: true },
-            image: { icon: '🖼', title: 'Chèn hình ảnh', cmd: 'insertImage', custom: true },
-            table: { icon: '⊞', title: 'Chèn bảng', cmd: 'insertTable', custom: true },
-            hr: { icon: '—', title: 'Đường kẻ ngang', cmd: 'insertHorizontalRule' },
+            link: { icon: '<i class="fas fa-link"></i>', title: 'Chèn liên kết', cmd: 'createLink', custom: true },
+            image: { icon: '<i class="fas fa-image"></i>', title: 'Chèn hình ảnh', cmd: 'insertImage', custom: true },
+            table: { icon: '<i class="fas fa-table"></i>', title: 'Chèn bảng', cmd: 'insertTable', custom: true },
+            hr: { icon: '<i class="fas fa-minus"></i>', title: 'Đường kẻ ngang', cmd: 'insertHorizontalRule' },
             
             // Colors
-            foreColor: { icon: 'A', title: 'Màu chữ', cmd: 'foreColor', custom: true },
-            backColor: { icon: '🎨', title: 'Màu nền', cmd: 'backColor', custom: true },
+            foreColor: { icon: '<i class="fas fa-palette"></i>', title: 'Màu chữ', cmd: 'foreColor', custom: true },
+            backColor: { icon: '<i class="fas fa-fill-drip"></i>', title: 'Màu nền', cmd: 'backColor', custom: true },
             
             // Tools
-            removeFormat: { icon: '🗑', title: 'Xóa định dạng', cmd: 'removeFormat' },
-            code: { icon: '<>', title: 'Xem mã HTML', cmd: 'code', custom: true },
-            fullscreen: { icon: '⛶', title: 'Toàn màn hình', cmd: 'fullscreen', custom: true }
+            removeFormat: { icon: '<i class="fas fa-eraser"></i>', title: 'Xóa định dạng', cmd: 'removeFormat' },
+            code: { icon: '<i class="fas fa-code"></i>', title: 'Xem mã HTML', cmd: 'code', custom: true },
+            fullscreen: { icon: '<i class="fas fa-expand"></i>', title: 'Toàn màn hình', cmd: 'fullscreen', custom: true }
         };
 
         const button = buttons[command];
@@ -191,7 +179,11 @@ class CustomRichEditor {
         });
 
         this.content.addEventListener('focus', () => {
-            this.handlePlaceholder();
+            // Remove placeholder when focused
+            const placeholder = this.content.querySelector('.placeholder');
+            if (placeholder) {
+                this.content.innerHTML = '<p><br></p>';
+            }
         });
 
         this.content.addEventListener('blur', () => {
@@ -460,12 +452,15 @@ class CustomRichEditor {
     handlePlaceholder() {
         const isEmpty = this.content.textContent.trim() === '' || 
                        this.content.innerHTML === '<p><br></p>' ||
-                       this.content.innerHTML === '';
+                       this.content.innerHTML === '' ||
+                       this.content.innerHTML === '<div><br></div>';
                        
         if (isEmpty && !this.content.matches(':focus')) {
-            this.content.innerHTML = `<p style="color: #999;">${this.options.placeholder}</p>`;
-        } else if (this.content.innerHTML.includes(this.options.placeholder)) {
+            this.content.innerHTML = `<p class="placeholder" style="color: #999; font-style: italic; margin: 0;">${this.options.placeholder}</p>`;
+        } else if (this.content.innerHTML.includes(this.options.placeholder) || 
+                   this.content.querySelector('.placeholder')) {
             this.content.innerHTML = '<p><br></p>';
+            this.content.focus();
         }
     }
 
@@ -473,7 +468,8 @@ class CustomRichEditor {
         let content = this.content.innerHTML;
         
         // Xóa placeholder nếu có
-        if (content.includes(this.options.placeholder)) {
+        if (content.includes(this.options.placeholder) || 
+            content.includes('class="placeholder"')) {
             content = '';
         }
         
@@ -517,11 +513,45 @@ window.insertImageToCustomEditor = function(imageUrl, editorId) {
     if (editor && editor.content) {
         editor.content.focus();
         
+        // Remove placeholder if exists
+        const placeholder = editor.content.querySelector('.placeholder');
+        if (placeholder) {
+            editor.content.innerHTML = '';
+        }
+        
         // Create image element with proper styling
-        const imgHtml = `<img src="${imageUrl}" style="max-width: 100%; height: auto; margin: 10px 0;" alt="Inserted image" />`;
+        const imgHtml = `<p><img src="${imageUrl}" style="max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px;" alt="Inserted image" /></p>`;
         document.execCommand('insertHTML', false, imgHtml);
         
         editor.updateHiddenInput();
+    }
+};
+
+// Listen for the existing insertImageFromModal event
+window.addEventListener('insertImageFromModal', function(event) {
+    const imageUrl = event.detail.imageUrl || event.detail.url;
+    const editorId = window.targetCustomEditorId;
+    
+    if (editorId && imageUrl) {
+        window.insertImageToCustomEditor(imageUrl, editorId);
+    }
+});
+
+// Listen for select-image event (Alpine.js)
+document.addEventListener('select-image', function(event) {
+    const imageUrl = event.detail.url || event.detail.imageUrl;
+    const editorId = window.targetCustomEditorId;
+    
+    if (editorId && imageUrl) {
+        window.insertImageToCustomEditor(imageUrl, editorId);
+    }
+});
+
+// Global function to be called by file manager
+window.insertToWysiwyg = function(imageUrl) {
+    const editorId = window.targetCustomEditorId;
+    if (editorId) {
+        window.insertImageToCustomEditor(imageUrl, editorId);
     }
 };
 
@@ -532,23 +562,33 @@ window.openFileManagerForEditor = function(editorSelector) {
     // Set target editor ID for file manager
     window.targetCustomEditorId = editorId;
     
-    // Trigger file manager via Alpine.js or existing system
-    if (typeof Alpine !== 'undefined') {
-        // Try to find Alpine component and trigger file manager
-        const fileManagerComponent = document.querySelector('[x-data*="fileManagerModal"]');
-        if (fileManagerComponent && fileManagerComponent._x_dataStack) {
-            const component = fileManagerComponent._x_dataStack[0];
-            if (component.openFileManager) {
-                component.openFileManager('wysiwyg');
+    // Try to trigger the existing openFileManager function
+    if (typeof openFileManager === 'function') {
+        openFileManager('wysiwyg');
+        return;
+    }
+    
+    // Try Alpine.js approach
+    const alpineElements = document.querySelectorAll('[x-data]');
+    for (let element of alpineElements) {
+        if (element._x_dataStack && element._x_dataStack[0]) {
+            const data = element._x_dataStack[0];
+            if (data.openFileManager && typeof data.openFileManager === 'function') {
+                data.openFileManager('wysiwyg');
+                return;
             }
         }
     }
     
     // Fallback: dispatch custom event
     const event = new CustomEvent('open-file-manager-for-editor', {
-        detail: { editorId: editorId }
+        detail: { 
+            editorId: editorId,
+            target: 'wysiwyg'
+        }
     });
     document.dispatchEvent(event);
+    window.dispatchEvent(event);
 };
 
 // Listen for file manager events

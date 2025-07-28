@@ -170,6 +170,8 @@ function closeFileManagerModal() {
 
 window.addEventListener("insert-image-from-modal", function (event) {
     const urls = event.detail.images || [];
+    
+    // Handle TinyMCE editors
     if (typeof tinymce !== 'undefined') {
         const editor = tinymce.get(window.targetTinyEditorId || 'editor');
         if (editor) {
@@ -177,5 +179,12 @@ window.addEventListener("insert-image-from-modal", function (event) {
                 editor.insertContent(`<img src="${url}" style="max-width:300px;height:auto;" /><br/>`);
             });
         }
+    }
+    
+    // Handle Custom Rich Editors
+    if (window.targetCustomEditorId) {
+        urls.forEach(url => {
+            window.insertImageToCustomEditor(url, window.targetCustomEditorId);
+        });
     }
 });

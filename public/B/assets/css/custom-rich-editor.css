@@ -4,6 +4,10 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin-bottom: 20px;
+    width: 100%;
+    display: block;
+    clear: both;
 }
 
 .editor-toolbar {
@@ -50,11 +54,20 @@
     color: #495057;
 }
 
+.toolbar-btn i {
+    color: #495057;
+    font-size: 14px;
+}
+
 .toolbar-btn:hover {
     background: #e9ecef;
     border-color: #adb5bd;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-btn:hover i {
+    color: #343a40;
 }
 
 .toolbar-btn:active {
@@ -68,20 +81,8 @@
     border-color: #007bff;
 }
 
-.toolbar-btn[data-command="bold"] {
-    font-weight: bold;
-}
-
-.toolbar-btn[data-command="italic"] {
-    font-style: italic;
-}
-
-.toolbar-btn[data-command="underline"] {
-    text-decoration: underline;
-}
-
-.toolbar-btn[data-command="strikethrough"] {
-    text-decoration: line-through;
+.toolbar-btn.active i {
+    color: white;
 }
 
 .editor-content {
@@ -93,7 +94,7 @@
     background: white;
     font-family: inherit;
     line-height: 1.7;
-    color: #212529;
+    color: #212529 !important;
     border-radius: 0 0 8px 8px;
     overflow-y: auto;
     max-height: 600px;
@@ -109,7 +110,7 @@
     font-size: 2.5em;
     font-weight: 700;
     margin: 1em 0 0.5em 0;
-    color: #212529;
+    color: #212529 !important;
     line-height: 1.2;
 }
 
@@ -117,7 +118,7 @@
     font-size: 2em;
     font-weight: 600;
     margin: 0.8em 0 0.4em 0;
-    color: #212529;
+    color: #212529 !important;
     line-height: 1.3;
 }
 
@@ -125,7 +126,7 @@
     font-size: 1.5em;
     font-weight: 600;
     margin: 0.7em 0 0.3em 0;
-    color: #212529;
+    color: #212529 !important;
     line-height: 1.4;
 }
 
@@ -133,26 +134,38 @@
     font-size: 1.25em;
     font-weight: 600;
     margin: 0.6em 0 0.3em 0;
-    color: #212529;
+    color: #212529 !important;
 }
 
 .editor-content h5 {
     font-size: 1.1em;
     font-weight: 600;
     margin: 0.6em 0 0.3em 0;
-    color: #212529;
+    color: #212529 !important;
 }
 
 .editor-content h6 {
     font-size: 1em;
     font-weight: 600;
     margin: 0.6em 0 0.3em 0;
-    color: #212529;
+    color: #212529 !important;
 }
 
 .editor-content p {
     margin: 0.8em 0;
     line-height: 1.7;
+    color: #212529 !important;
+}
+
+.editor-content * {
+    color: #212529 !important;
+}
+
+.editor-content .placeholder {
+    color: #999 !important;
+    font-style: italic;
+    user-select: none;
+    pointer-events: none;
 }
 
 .editor-content ul, .editor-content ol {
