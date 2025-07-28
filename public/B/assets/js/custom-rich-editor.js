@@ -12,7 +12,18 @@ class CustomRichEditor {
             placeholder: options.placeholder || 'Nhập nội dung...',
             toolbar: options.toolbar || 'full',
             uploadUrl: options.uploadUrl || '/admin/upload-image',
-            allowImageUpload: options.allowImageUpload !== false,
+            allowImageUpload: options.allowImagfunction openFileManagerForEditor(editorSelector) {
+    const editorId = editorSelector.replace('#', '');
+    
+    // Set target editor ID for file manager
+    window.targetCustomEditorId = editorId;
+    window.targetTinyEditorId = editorId;
+    
+    // Try to trigger the existing openFileManager function
+    if (typeof openFileManager === 'function') {
+        openFileManager('wysiwyg');
+        return;
+    } false,
             ...options
         };
         
@@ -561,6 +572,7 @@ window.openFileManagerForEditor = function(editorSelector) {
     
     // Set target editor ID for file manager
     window.targetCustomEditorId = editorId;
+    window.targetTinyEditorId = editorId;
     
     // Try to trigger the existing openFileManager function
     if (typeof openFileManager === 'function') {

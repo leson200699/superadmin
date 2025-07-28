@@ -37,10 +37,8 @@
                             <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
                         </button>
                         
-                        <textarea id="content-editor" name="content" 
-                                  data-rich-editor 
-                                  data-rich-editor-options='{"height": "400px", "placeholder": "Soạn thảo nội dung bài viết...", "toolbar": "full", "allowImageUpload": false}'
-                                  style="display: none;"></textarea>
+                        <textarea id="content-editor" name="content" rows="12" 
+                                  class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base"></textarea>
                     </div>
                     <div>
                         <label for="name_en" class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết [en]<span class="text-red-500">*</span></label>
@@ -58,10 +56,8 @@
                             <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
                         </button>
                         
-                        <textarea id="content-editor-en" name="content_en" 
-                                  data-rich-editor 
-                                  data-rich-editor-options='{"height": "300px", "placeholder": "Soạn thảo nội dung bài viết tiếng Anh...", "toolbar": "full", "allowImageUpload": false}'
-                                  style="display: none;"></textarea>
+                        <textarea id="content-editor-en" name="content_en" rows="10"
+                                  class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base"></textarea>
                     </div>
                 </div>
             </div>
@@ -213,25 +209,33 @@
 <script src="<?= base_url('B/assets/js/handle.js') ?>"></script>
 
 <script>
-// Initialize custom rich text editors after page load
+// Initialize rich text editors
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Vietnamese content editor
-    const contentEditor = new CustomRichEditor('#content-editor', {
-        height: '400px',
-        placeholder: 'Soạn thảo nội dung bài viết...',
-        toolbar: 'full',
-        allowImageUpload: false, // Sử dụng file manager có sẵn
-        showWordCount: true
-    });
-
-    // Initialize English content editor
-    const contentEditorEn = new CustomRichEditor('#content-editor-en', {
-        height: '300px',
-        placeholder: 'Soạn thảo nội dung bài viết tiếng Anh...',
-        toolbar: 'full',
-        allowImageUpload: false, // Sử dụng file manager có sẵn
-        showWordCount: true
-    });
+    // Make sure our global object exists
+    if (!window.customRichEditors) {
+        window.customRichEditors = {};
+    }
+    
+    // Initialize only if tinymce is not available or not active
+    if (typeof tinymce === 'undefined' || !tinymce.activeEditor) {
+        // Initialize Vietnamese content editor
+        const contentEditor = new CustomRichEditor('#content-editor', {
+            height: '400px',
+            placeholder: 'Soạn thảo nội dung bài viết...',
+            toolbar: 'full',
+            allowImageUpload: false, // Use existing file manager
+            showWordCount: true
+        });
+        
+        // Initialize English content editor
+        const contentEditorEn = new CustomRichEditor('#content-editor-en', {
+            height: '300px',
+            placeholder: 'Soạn thảo nội dung bài viết tiếng Anh...',
+            toolbar: 'full',
+            allowImageUpload: false, // Use existing file manager
+            showWordCount: true
+        });
+    }
 
     // Handle form submission to ensure content is saved
     const form = document.querySelector('form');
@@ -262,16 +266,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Integration with existing image manager
+    // Integration with existing file manager
     window.insertImageToEditor = function(imageUrl, editorId) {
-        if (editorId === 'content-editor') {
-            contentEditor.content.focus();
+        // Check for custom editor first
+        if (window.customRichEditors && window.customRichEditors[editorId]) {
+            const editor = window.customRichEditors[editorId];
+            editor.content.focus();
             document.execCommand('insertImage', false, imageUrl);
-            contentEditor.updateHiddenInput();
-        } else if (editorId === 'content-editor-en') {
-            contentEditorEn.content.focus();
-            document.execCommand('insertImage', false, imageUrl);
-            contentEditorEn.updateHiddenInput();
+            editor.updateHiddenInput();
+            return;
+        }
+        
+        // Otherwise, just insert to textarea - this handles direct textarea insertion too
+        const textarea = document.querySelector('#' + editorId);
+        if (textarea) {
+            const imgTag = `<img src="${imageUrl}" alt="Inserted image" style="max-width:100%;height:auto;">`;
+            
+            // If textarea, insert at cursor position or append
+            if (textarea.tagName === 'TEXTAREA') {
+                const startPos = textarea.selectionStart || 0;
+                const endPos = textarea.selectionEnd || startPos;
+                const textBefore = textarea.value.substring(0, startPos);
+                const textAfter = textarea.value.substring(endPos, textarea.value.length);
+                
+                textarea.value = textBefore + imgTag + textAfter;
+                textarea.focus();
+                textarea.selectionStart = startPos + imgTag.length;
+                textarea.selectionEnd = startPos + imgTag.length;
+            }
         }
     };
 });

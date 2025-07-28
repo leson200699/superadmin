@@ -184,7 +184,11 @@ window.addEventListener("insert-image-from-modal", function (event) {
     // Handle Custom Rich Editors
     if (window.targetCustomEditorId) {
         urls.forEach(url => {
-            window.insertImageToCustomEditor(url, window.targetCustomEditorId);
+            if (window.insertImageToEditor) {
+                window.insertImageToEditor(url, window.targetCustomEditorId);
+            } else if (window.insertImageToCustomEditor) {
+                window.insertImageToCustomEditor(url, window.targetCustomEditorId);
+            }
         });
     }
 });
