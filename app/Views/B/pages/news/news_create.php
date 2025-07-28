@@ -38,6 +38,8 @@
                         </button>
                         
                         <textarea id="content-editor" name="content" rows="12" 
+                                  data-rich-editor
+                                  data-rich-editor-options='{"height": "400px", "placeholder": "Soạn thảo nội dung bài viết...", "toolbar": "full", "allowImageUpload": false}'
                                   class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base"></textarea>
                     </div>
                     <div>
@@ -57,6 +59,8 @@
                         </button>
                         
                         <textarea id="content-editor-en" name="content_en" rows="10"
+                                  data-rich-editor
+                                  data-rich-editor-options='{"height": "300px", "placeholder": "Soạn thảo nội dung bài viết tiếng Anh...", "toolbar": "full", "allowImageUpload": false}'
                                   class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base"></textarea>
                     </div>
                 </div>
@@ -216,26 +220,17 @@ document.addEventListener('DOMContentLoaded', function() {
         window.customRichEditors = {};
     }
     
-    // Initialize only if tinymce is not available or not active
-    if (typeof tinymce === 'undefined' || !tinymce.activeEditor) {
-        // Initialize Vietnamese content editor
-        const contentEditor = new CustomRichEditor('#content-editor', {
-            height: '400px',
-            placeholder: 'Soạn thảo nội dung bài viết...',
-            toolbar: 'full',
-            allowImageUpload: false, // Use existing file manager
-            showWordCount: true
-        });
+    // Initialize editors with data-rich-editor attribute
+    document.querySelectorAll('[data-rich-editor]').forEach(function(el) {
+        const id = el.id;
+        const options = el.dataset.richEditorOptions ? JSON.parse(el.dataset.richEditorOptions) : {};
         
-        // Initialize English content editor
-        const contentEditorEn = new CustomRichEditor('#content-editor-en', {
-            height: '300px',
-            placeholder: 'Soạn thảo nội dung bài viết tiếng Anh...',
-            toolbar: 'full',
-            allowImageUpload: false, // Use existing file manager
-            showWordCount: true
-        });
-    }
+        // Create editor instance
+        const editor = new CustomRichEditor('#' + id, options);
+        
+        // Store in global object
+        window.customRichEditors[id] = editor;
+    });
 
     // Handle form submission to ensure content is saved
     const form = document.querySelector('form');
