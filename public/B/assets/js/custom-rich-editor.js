@@ -8,11 +8,9 @@ class CustomRichEditor {
         this.selector = selector;
         this.element = document.querySelector(selector);
         this.options = {
-            height: options.height || '400px',
-            placeholder: options.placeholder || 'Nhập nội dung...',
-            toolbar: options.toolbar || 'full',
-            uploadUrl: options.uploadUrl || '/admin/upload-image',
-            allowImageUpload: options.allowImageUpload || false,
+            height: options.height || 400,
+            placeholder: options.placeholder || 'Soạn thảo nội dung...',
+            toolbar: options.toolbar || ['bold', 'italic', 'underline', 'link', 'list', 'image'],
             ...options
         };
         
@@ -21,576 +19,596 @@ class CustomRichEditor {
 
     init() {
         if (!this.element) {
-            console.error('Editor element not found:', this.selector);
+            console.error(`Element with selector "${this.selector}" not found`);
             return;
         }
 
         this.createEditor();
-        this.bindEvents();
-        
-        // Store instance globally for file manager access
-        const editorId = this.selector.replace('#', '');
-        window.customRichEditors[editorId] = this;
+        this.setupToolbar();
+        this.setupEventListeners();
+        this.setupImageInsertion();
     }
 
     createEditor() {
         // Tạo container cho editor
-        const editorContainer = document.createElement('div');
-        editorContainer.className = 'custom-rich-editor';
-        editorContainer.innerHTML = `
-            <div class="editor-toolbar">
-                ${this.createToolbar()}
-            </div>
-            <div class="editor-content" contenteditable="true" style="min-height: ${this.options.height};">
-                <p class="placeholder" style="color: #999; font-style: italic; margin: 0;">${this.options.placeholder}</p>
-            </div>
+        this.editorContainer = document.createElement('div');
+        this.editorContainer.className = 'custom-rich-editor';
+        this.editorContainer.style.cssText = `
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background: white;
+            overflow: hidden;
         `;
 
-        // Thay thế element gốc
-        this.element.parentNode.insertBefore(editorContainer, this.element);
+        // Tạo toolbar
+        this.toolbar = document.createElement('div');
+        this.toolbar.className = 'editor-toolbar';
+        this.toolbar.style.cssText = `
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        `;
+
+        // Tạo content area
+        this.contentArea = document.createElement('div');
+        this.contentArea.className = 'editor-content';
+        this.contentArea.contentEditable = true;
+        this.contentArea.style.cssText = `
+            min-height: ${this.options.height}px;
+            padding: 1rem;
+            outline: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #374151;
+        `;
+
+        // Thêm placeholder
+        this.contentArea.setAttribute('data-placeholder', this.options.placeholder);
+
+        // Thêm vào container
+        this.editorContainer.appendChild(this.toolbar);
+        this.editorContainer.appendChild(this.contentArea);
+
+        // Thay thế textarea gốc
         this.element.style.display = 'none';
+        this.element.parentNode.insertBefore(this.editorContainer, this.element.nextSibling);
 
-        // Lưu references
-        this.toolbar = editorContainer.querySelector('.editor-toolbar');
-        this.content = editorContainer.querySelector('.editor-content');
-        this.hiddenInput = this.element;
-
-        // Set initial placeholder state
-        this.handlePlaceholder();
-
-        editorContainer.style.backgroundColor = '#ffffff'; // Set white background
-        editorContainer.style.color = '#000000'; // Set black text color
+        // Sync content với textarea gốc
+        this.syncContent();
     }
 
-    createToolbar() {
-        const toolbarConfig = {
-            full: [
-                { group: 'history', items: ['undo', 'redo'] },
-                { group: 'format', items: ['bold', 'italic', 'underline', 'strikethrough'] },
-                { group: 'paragraph', items: ['h1', 'h2', 'h3', 'paragraph'] },
-                { group: 'align', items: ['alignLeft', 'alignCenter', 'alignRight', 'alignJustify'] },
-                { group: 'list', items: ['insertUnorderedList', 'insertOrderedList'] },
-                { group: 'indent', items: ['outdent', 'indent'] },
-                { group: 'insert', items: ['link', 'image', 'table', 'hr'] },
-                { group: 'color', items: ['foreColor', 'backColor'] },
-                { group: 'tools', items: ['removeFormat', 'code', 'fullscreen'] }
-            ],
-            basic: [
-                { group: 'format', items: ['bold', 'italic', 'underline'] },
-                { group: 'paragraph', items: ['h2', 'h3'] },
-                { group: 'list', items: ['insertUnorderedList', 'insertOrderedList'] },
-                { group: 'insert', items: ['link', 'image'] }
-            ]
-        };
+    setupToolbar() {
+        const toolbarButtons = [
+            { name: 'bold', icon: 'fas fa-bold', title: 'Bold (Ctrl+B)', command: 'bold' },
+            { name: 'italic', icon: 'fas fa-italic', title: 'Italic (Ctrl+I)', command: 'italic' },
+            { name: 'underline', icon: 'fas fa-underline', title: 'Underline (Ctrl+U)', command: 'underline' },
+            { name: 'separator', type: 'separator' },
+            { name: 'h1', icon: 'fas fa-heading', title: 'Heading 1', command: 'formatBlock', value: 'h1' },
+            { name: 'h2', icon: 'fas fa-heading', title: 'Heading 2', command: 'formatBlock', value: 'h2' },
+            { name: 'h3', icon: 'fas fa-heading', title: 'Heading 3', command: 'formatBlock', value: 'h3' },
+            { name: 'paragraph', icon: 'fas fa-paragraph', title: 'Paragraph', command: 'formatBlock', value: 'p' },
+            { name: 'separator2', type: 'separator' },
+            { name: 'link', icon: 'fas fa-link', title: 'Insert Link', command: 'createLink' },
+            { name: 'list-ul', icon: 'fas fa-list-ul', title: 'Bullet List', command: 'insertUnorderedList' },
+            { name: 'list-ol', icon: 'fas fa-list-ol', title: 'Numbered List', command: 'insertOrderedList' },
+            { name: 'separator3', type: 'separator' },
+            { name: 'image', icon: 'fas fa-image', title: 'Insert Image from File Manager', command: 'insertImageFromFileManager' },
+            { name: 'code', icon: 'fas fa-code', title: 'Code', command: 'insertCode' }
+        ];
 
-        const config = toolbarConfig[this.options.toolbar] || toolbarConfig.basic;
-        
-        return config.map(group => {
-            const groupHtml = group.items.map(item => this.createToolbarButton(item)).join('');
-            return `<div class="toolbar-group" style="display: flex; gap: 2px; margin-right: 8px; padding-right: 8px; border-right: 1px solid #dee2e6;">${groupHtml}</div>`;
-        }).join('');
+        toolbarButtons.forEach(button => {
+            if (button.type === 'separator') {
+                const separator = document.createElement('div');
+                separator.style.cssText = `
+                    width: 1px;
+                    height: 20px;
+                    background: #d1d5db;
+                    margin: 0 0.5rem;
+                `;
+                this.toolbar.appendChild(separator);
+            } else {
+                const btn = this.createToolbarButton(button);
+                this.toolbar.appendChild(btn);
+            }
+        });
     }
 
-    createToolbarButton(command) {
-        const buttons = {
-            // History
-            undo: { icon: '<i class="fas fa-undo"></i>', title: 'Hoàn tác', cmd: 'undo' },
-            redo: { icon: '<i class="fas fa-redo"></i>', title: 'Làm lại', cmd: 'redo' },
-            
-            // Format
-            bold: { icon: '<i class="fas fa-bold"></i>', title: 'Đậm', cmd: 'bold' },
-            italic: { icon: '<i class="fas fa-italic"></i>', title: 'Nghiêng', cmd: 'italic' },
-            underline: { icon: '<i class="fas fa-underline"></i>', title: 'Gạch chân', cmd: 'underline' },
-            strikethrough: { icon: '<i class="fas fa-strikethrough"></i>', title: 'Gạch ngang', cmd: 'strikeThrough' },
-            
-            // Headings
-            h1: { icon: '<i class="fas fa-heading"></i>', title: 'Tiêu đề 1', cmd: 'formatBlock', value: '<h1>' },
-            h2: { icon: '<i class="fas fa-heading"></i>', title: 'Tiêu đề 2', cmd: 'formatBlock', value: '<h2>' },
-            h3: { icon: '<i class="fas fa-heading"></i>', title: 'Tiêu đề 3', cmd: 'formatBlock', value: '<h3>' },
-            paragraph: { icon: '<i class="fas fa-paragraph"></i>', title: 'Đoạn văn', cmd: 'formatBlock', value: '<p>' },
-            
-            // Alignment
-            alignLeft: { icon: '<i class="fas fa-align-left"></i>', title: 'Căn trái', cmd: 'justifyLeft' },
-            alignCenter: { icon: '<i class="fas fa-align-center"></i>', title: 'Căn giữa', cmd: 'justifyCenter' },
-            alignRight: { icon: '<i class="fas fa-align-right"></i>', title: 'Căn phải', cmd: 'justifyRight' },
-            alignJustify: { icon: '<i class="fas fa-align-justify"></i>', title: 'Căn đều', cmd: 'justifyFull' },
-            
-            // Lists
-            insertUnorderedList: { icon: '<i class="fas fa-list-ul"></i>', title: 'Danh sách không thứ tự', cmd: 'insertUnorderedList' },
-            insertOrderedList: { icon: '<i class="fas fa-list-ol"></i>', title: 'Danh sách có thứ tự', cmd: 'insertOrderedList' },
-            
-            // Indent
-            outdent: { icon: '<i class="fas fa-outdent"></i>', title: 'Giảm thụt lề', cmd: 'outdent' },
-            indent: { icon: '<i class="fas fa-indent"></i>', title: 'Tăng thụt lề', cmd: 'indent' },
-            
-            // Insert
-            link: { icon: '<i class="fas fa-link"></i>', title: 'Chèn liên kết', cmd: 'createLink', custom: true },
-            image: { icon: '<i class="fas fa-image"></i>', title: 'Chèn hình ảnh', cmd: 'insertImage', custom: true },
-            table: { icon: '<i class="fas fa-table"></i>', title: 'Chèn bảng', cmd: 'insertTable', custom: true },
-            hr: { icon: '<i class="fas fa-minus"></i>', title: 'Đường kẻ ngang', cmd: 'insertHorizontalRule' },
-            
-            // Colors
-            foreColor: { icon: '<i class="fas fa-palette"></i>', title: 'Màu chữ', cmd: 'foreColor', custom: true },
-            backColor: { icon: '<i class="fas fa-fill-drip"></i>', title: 'Màu nền', cmd: 'backColor', custom: true },
-            
-            // Tools
-            removeFormat: { icon: '<i class="fas fa-eraser"></i>', title: 'Xóa định dạng', cmd: 'removeFormat' },
-            code: { icon: '<i class="fas fa-code"></i>', title: 'Xem mã HTML', cmd: 'code', custom: true },
-            fullscreen: { icon: '<i class="fas fa-expand"></i>', title: 'Toàn màn hình', cmd: 'fullscreen', custom: true }
-        };
-
-        const button = buttons[command];
-        if (!button) return '';
-
-        const style = button.style || '';
-        return `
-            <button type="button" 
-                    class="toolbar-btn" 
-                    data-command="${command}" 
-                    title="${button.title}"
-                    style="
-                        padding: 6px 8px; 
-                        border: 1px solid #dee2e6; 
-                        background: white; 
-                        border-radius: 4px; 
-                        cursor: pointer; 
-                        font-size: 12px; 
-                        min-width: 30px;
-                        ${style}
-                    "
-                    onmouseover="this.style.background='#e9ecef'" 
-                    onmouseout="this.style.background='white'">
-                ${button.icon}
-            </button>
+    createToolbarButton(button) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'toolbar-btn';
+        btn.title = button.title;
+        btn.innerHTML = `<i class="${button.icon}"></i>`;
+        btn.style.cssText = `
+            padding: 0.5rem;
+            background: transparent;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
         `;
+
+        btn.addEventListener('mouseenter', () => {
+            btn.style.background = '#e5e7eb';
+            btn.style.color = '#374151';
+        });
+
+        btn.addEventListener('mouseleave', () => {
+            btn.style.background = 'transparent';
+            btn.style.color = '#6b7280';
+        });
+
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.executeCommand(button.command, button.value);
+        });
+
+        return btn;
     }
 
-    bindEvents() {
-        // Toolbar events
-        this.toolbar.addEventListener('click', (e) => {
-            if (e.target.classList.contains('toolbar-btn')) {
-                e.preventDefault();
-                const command = e.target.dataset.command;
-                this.executeCommand(command);
-            }
-        });
-
-        // Content events
-        this.content.addEventListener('input', () => {
-            this.updateHiddenInput();
-            this.handlePlaceholder();
-        });
-
-        this.content.addEventListener('focus', () => {
-            // Remove placeholder when focused
-            const placeholder = this.content.querySelector('.placeholder');
-            if (placeholder) {
-                this.content.innerHTML = '<p><br></p>';
-            }
-        });
-
-        this.content.addEventListener('blur', () => {
-            this.handlePlaceholder();
-        });
-
-        this.content.addEventListener('keydown', (e) => {
-            this.handleKeyboard(e);
-        });
-
-        // Paste event
-        this.content.addEventListener('paste', (e) => {
-            this.handlePaste(e);
-        });
-
-        // Update hidden input when form is submitted
-        const form = this.element.closest('form');
-        if (form) {
-            form.addEventListener('submit', () => {
-                this.updateHiddenInput();
-            });
-        }
-    }
-
-    executeCommand(command) {
-        this.content.focus();
-
+    executeCommand(command, value = null) {
         switch (command) {
+            case 'bold':
+            case 'italic':
+            case 'underline':
+            case 'insertUnorderedList':
+            case 'insertOrderedList':
+                document.execCommand(command, false, null);
+                break;
+            case 'formatBlock':
+                if (value) {
+                    document.execCommand('formatBlock', false, `<${value}>`);
+                }
+                break;
             case 'createLink':
-            case 'link':
-                this.insertLink();
+                this.createLink();
                 break;
             case 'insertImage':
-            case 'image':
                 this.insertImage();
                 break;
-            case 'insertTable':
-            case 'table':
-                this.insertTable();
+            case 'insertImageFromFileManager':
+                this.insertImageFromFileManager();
                 break;
-            case 'foreColor':
-                this.changeColor('foreColor');
+            case 'insertCode':
+                this.insertCode();
                 break;
-            case 'backColor':
-                this.changeColor('backColor');
-                break;
-            case 'code':
-                this.toggleCodeView();
-                break;
-            case 'fullscreen':
-                this.toggleFullscreen();
-                break;
-            default:
-                const button = this.getButtonConfig(command);
-                if (button) {
-                    if (button.value) {
-                        document.execCommand(button.cmd, false, button.value);
-                    } else {
-                        document.execCommand(button.cmd, false, null);
-                    }
-                }
         }
-
-        this.updateHiddenInput();
+        this.contentArea.focus();
+        this.syncContent();
     }
 
-    getButtonConfig(command) {
-        const buttons = {
-            undo: { cmd: 'undo' },
-            redo: { cmd: 'redo' },
-            bold: { cmd: 'bold' },
-            italic: { cmd: 'italic' },
-            underline: { cmd: 'underline' },
-            strikethrough: { cmd: 'strikeThrough' },
-            h1: { cmd: 'formatBlock', value: '<h1>' },
-            h2: { cmd: 'formatBlock', value: '<h2>' },
-            h3: { cmd: 'formatBlock', value: '<h3>' },
-            paragraph: { cmd: 'formatBlock', value: '<p>' },
-            alignLeft: { cmd: 'justifyLeft' },
-            alignCenter: { cmd: 'justifyCenter' },
-            alignRight: { cmd: 'justifyRight' },
-            alignJustify: { cmd: 'justifyFull' },
-            insertUnorderedList: { cmd: 'insertUnorderedList' },
-            insertOrderedList: { cmd: 'insertOrderedList' },
-            outdent: { cmd: 'outdent' },
-            indent: { cmd: 'indent' },
-            hr: { cmd: 'insertHorizontalRule' },
-            removeFormat: { cmd: 'removeFormat' }
-        };
-        return buttons[command];
-    }
-
-    insertLink() {
-        const url = prompt('Nhập URL:', 'https://');
+    createLink() {
+        const url = prompt('Enter URL:');
         if (url) {
             document.execCommand('createLink', false, url);
+            this.syncContent();
         }
     }
 
     insertImage() {
-        // Tích hợp với file manager có sẵn
-        if (typeof window.openFileManagerForEditor === 'function') {
-            window.openFileManagerForEditor(this.selector);
-        } else {
-            // Fallback: mở file manager thông qua Alpine.js event
-            const fileManagerEvent = new CustomEvent('open-file-manager', {
-                detail: {
-                    target: 'wysiwyg',
-                    editorId: this.selector.replace('#', '')
-                }
-            });
-            window.dispatchEvent(fileManagerEvent);
-        }
+        // This method is now only used as fallback
+        // Try file manager first, then fallback to modal
+        this.insertImageFromFileManager();
     }
 
-    uploadImage(file) {
-        // Phương thức này không còn sử dụng vì đã tích hợp với file manager
-        console.warn('uploadImage method deprecated - using file manager instead');
-    }
-
-    insertTable() {
-        const rows = prompt('Số hàng:', '3');
-        const cols = prompt('Số cột:', '3');
+    insertImageFromFileManager() {
+        console.log('Attempting to open file manager...');
         
-        if (rows && cols) {
-            let table = '<table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
-            for (let i = 0; i < parseInt(rows); i++) {
-                table += '<tr>';
-                for (let j = 0; j < parseInt(cols); j++) {
-                    table += '<td style="padding: 8px; border: 1px solid #ddd;">Ô ' + (i + 1) + ',' + (j + 1) + '</td>';
-                }
-                table += '</tr>';
+        // Set target for custom editor
+        window.targetCustomEditorId = this.selector;
+        
+        // Wait for Alpine.js to be ready
+        const waitForAlpine = () => {
+            if (typeof Alpine !== 'undefined' && Alpine.isLoaded) {
+                this.tryOpenFileManager();
+        } else {
+                setTimeout(waitForAlpine, 100);
             }
-            table += '</table>';
+        };
+        
+        waitForAlpine();
+    }
+    
+    tryOpenFileManager() {
+        console.log('Trying to open file manager...');
+        
+        // Try to find Alpine.js component and call openFileManager
+        if (typeof Alpine !== 'undefined') {
+            console.log('Alpine.js is available');
             
-            document.execCommand('insertHTML', false, table);
+            // Method 1: Look for newsFormData component
+            const newsFormElement = document.querySelector('[x-data*="newsFormData"]');
+            console.log('Found newsFormData element:', newsFormElement);
+            
+            if (newsFormElement && newsFormElement.__x && newsFormElement.__x.$data) {
+                const component = newsFormElement.__x.$data;
+                console.log('NewsFormData component:', component);
+                
+                if (typeof component.openFileManager === 'function') {
+                    console.log('Calling newsFormData.openFileManager...');
+                    component.openFileManager('wysiwyg');
+                    return;
+                }
+            }
+            
+            // Method 2: Look for any Alpine component with openFileManager
+            const allAlpineElements = document.querySelectorAll('[x-data]');
+            console.log(`Found ${allAlpineElements.length} Alpine elements`);
+            
+            for (const element of allAlpineElements) {
+                if (element.__x && element.__x.$data) {
+                    const component = element.__x.$data;
+                    if (typeof component.openFileManager === 'function') {
+                        console.log('Found Alpine component with openFileManager:', element);
+                        component.openFileManager('wysiwyg');
+                        return;
+                    }
+                }
+            }
+            
+            // Method 3: Try to access Alpine store
+            if (Alpine.store && Alpine.store('newsFormData')) {
+                console.log('Found Alpine store newsFormData');
+                const store = Alpine.store('newsFormData');
+                if (typeof store.openFileManager === 'function') {
+                    console.log('Calling store.openFileManager...');
+                    store.openFileManager('wysiwyg');
+                    return;
+                }
+            }
         }
+        
+        // Fallback: dispatch custom event
+        console.log('Dispatching open-file-manager event...');
+        const event = new CustomEvent('open-file-manager', {
+            detail: {
+                target: 'wysiwyg',
+                editorId: this.selector
+            }
+        });
+        document.dispatchEvent(event);
+        
+        // Final fallback: create modal
+        console.log('Creating fallback modal...');
+        this.createImageModal();
     }
-
-    changeColor(type) {
-        const color = prompt('Nhập mã màu (ví dụ: #ff0000, red):', '#000000');
-        if (color) {
-            document.execCommand(type, false, color);
+    
+    createImageModal() {
+        console.log('Creating image modal fallback...');
+        
+        // Check if modal already exists
+        if (document.querySelector('.image-modal-fallback')) {
+            console.log('Modal already exists, removing...');
+            document.querySelector('.image-modal-fallback').remove();
         }
-    }
-
-    toggleCodeView() {
-        if (this.content.style.fontFamily === 'monospace') {
-            // Quay về view bình thường
-            this.content.innerHTML = this.content.textContent;
-            this.content.style.fontFamily = 'inherit';
-            this.content.style.fontSize = 'inherit';
-            this.content.style.whiteSpace = 'normal';
-        } else {
-            // Chuyển sang code view
-            this.content.textContent = this.content.innerHTML;
-            this.content.style.fontFamily = 'monospace';
-            this.content.style.fontSize = '12px';
-            this.content.style.whiteSpace = 'pre-wrap';
-        }
-    }
-
-    toggleFullscreen() {
-        const container = this.content.closest('.custom-rich-editor');
-        if (container.style.position === 'fixed') {
-            // Thoát fullscreen
-            container.style.cssText = '';
-            document.body.style.overflow = '';
-        } else {
-            // Vào fullscreen
-            container.style.cssText = `
+        
+        // Tạo modal đơn giản để chọn ảnh
+        const modal = document.createElement('div');
+        modal.className = 'image-modal-fallback';
+        modal.style.cssText = `
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        `;
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
                 background: white;
-                z-index: 9999;
-                padding: 20px;
-                box-sizing: border-box;
-            `;
-            this.content.style.height = 'calc(100% - 120px)';
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    handleKeyboard(e) {
-        // Ctrl+B = Bold
-        if (e.ctrlKey && e.key === 'b') {
-            e.preventDefault();
-            this.executeCommand('bold');
-        }
-        // Ctrl+I = Italic
-        else if (e.ctrlKey && e.key === 'i') {
-            e.preventDefault();
-            this.executeCommand('italic');
-        }
-        // Ctrl+U = Underline
-        else if (e.ctrlKey && e.key === 'u') {
-            e.preventDefault();
-            this.executeCommand('underline');
-        }
-        // Ctrl+Z = Undo
-        else if (e.ctrlKey && e.key === 'z') {
-            e.preventDefault();
-            this.executeCommand('undo');
-        }
-        // Ctrl+Y = Redo
-        else if (e.ctrlKey && e.key === 'y') {
-            e.preventDefault();
-            this.executeCommand('redo');
-        }
-        // Tab = Indent
-        else if (e.key === 'Tab') {
-            e.preventDefault();
-            if (e.shiftKey) {
-                this.executeCommand('outdent');
-            } else {
-                this.executeCommand('indent');
+            padding: 2rem;
+            border-radius: 0.5rem;
+            min-width: 400px;
+            max-width: 90%;
+        `;
+        
+        modalContent.innerHTML = `
+            <h3 style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600;">Chèn hình ảnh</h3>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">URL hình ảnh:</label>
+                <input type="text" id="image-url-input" placeholder="https://example.com/image.jpg" 
+                       style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem;">
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button id="cancel-image" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer;">Hủy</button>
+                <button id="insert-image" style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">Chèn</button>
+            </div>
+        `;
+        
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        // Event listeners
+        document.getElementById('cancel-image').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        document.getElementById('insert-image').addEventListener('click', () => {
+            const url = document.getElementById('image-url-input').value.trim();
+            if (url) {
+                this.insertImageToEditor(url);
             }
+            document.body.removeChild(modal);
+        });
+        
+        // Close on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+        
+        // Focus on input
+        setTimeout(() => {
+            document.getElementById('image-url-input').focus();
+        }, 100);
+    }
+
+    insertImageToEditor(url) {
+        console.log('Inserting image:', url);
+        
+        // Focus on content area first
+        this.contentArea.focus();
+        
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText = 'max-width: 300px; height: auto; margin: 0.5rem 0; display: block;';
+        img.alt = 'Inserted image';
+        
+        // Create a line break after image
+        const br = document.createElement('br');
+        
+        // Try to insert at cursor position
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            range.insertNode(img);
+            range.insertNode(br);
+            range.collapse(false);
+        } else {
+            // Insert at end if no selection
+            this.contentArea.appendChild(img);
+            this.contentArea.appendChild(br);
+        }
+        
+        // Sync content and trigger input event
+        this.syncContent();
+        this.contentArea.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        console.log('Image inserted successfully');
+    }
+
+    insertCode() {
+        const code = prompt('Enter code:');
+        if (code) {
+            const pre = document.createElement('pre');
+            pre.style.cssText = `
+                background: #f3f4f6;
+                padding: 0.5rem;
+                border-radius: 0.25rem;
+                font-family: 'Courier New', monospace;
+                margin: 0.5rem 0;
+                overflow-x: auto;
+            `;
+            pre.textContent = code;
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.insertNode(pre);
+                range.collapse(false);
+            } else {
+                this.contentArea.appendChild(pre);
+            }
+            
+            this.syncContent();
         }
     }
 
-    handlePaste(e) {
-        e.preventDefault();
-        
-        // Lấy dữ liệu clipboard
-        const clipboardData = e.clipboardData || window.clipboardData;
-        const pastedData = clipboardData.getData('text/html') || clipboardData.getData('text/plain');
-        
-        // Làm sạch HTML
-        const cleanHtml = this.cleanHtml(pastedData);
-        
-        // Chèn HTML đã làm sạch
-        document.execCommand('insertHTML', false, cleanHtml);
-    }
-
-    cleanHtml(html) {
-        // Tạo element tạm để parse HTML
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-        
-        // Xóa các thẻ không mong muốn
-        const unwantedTags = ['script', 'style', 'meta', 'link'];
-        unwantedTags.forEach(tag => {
-            const elements = temp.querySelectorAll(tag);
-            elements.forEach(el => el.remove());
+    setupEventListeners() {
+        // Sync content khi có thay đổi
+        this.contentArea.addEventListener('input', () => {
+            this.syncContent();
         });
-        
-        // Xóa các thuộc tính không an toàn
-        const allElements = temp.querySelectorAll('*');
-        allElements.forEach(el => {
-            // Giữ lại một số thuộc tính cần thiết
-            const allowedAttrs = ['href', 'src', 'alt', 'title', 'class'];
-            const attrs = Array.from(el.attributes);
-            attrs.forEach(attr => {
-                if (!allowedAttrs.includes(attr.name.toLowerCase())) {
-                    el.removeAttribute(attr.name);
+
+        // Handle placeholder
+        this.contentArea.addEventListener('focus', () => {
+            if (this.contentArea.textContent === '') {
+                this.contentArea.classList.add('placeholder');
+            }
+        });
+
+        this.contentArea.addEventListener('blur', () => {
+            if (this.contentArea.textContent === '') {
+                this.contentArea.classList.remove('placeholder');
+            }
+        });
+
+        // Keyboard shortcuts
+        this.contentArea.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'b':
+                        e.preventDefault();
+                        document.execCommand('bold', false, null);
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        document.execCommand('italic', false, null);
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        document.execCommand('underline', false, null);
+                        break;
                 }
+                this.syncContent();
+            }
+        });
+
+        // Handle paste events
+        this.contentArea.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+            this.syncContent();
+        });
+    }
+
+    setupImageInsertion() {
+        // Global function để chèn ảnh từ file manager
+        window.insertImageToCustomEditor = (url, editorId) => {
+            if (editorId === this.selector) {
+                this.insertImageToEditor(url);
+            }
+        };
+        
+        // Listen for the insert-image-from-modal event from file manager
+        window.addEventListener('insert-image-from-modal', (event) => {
+            const urls = event.detail.images || [];
+            const editorId = window.targetCustomEditorId;
+            
+            console.log('Custom editor received image event:', {
+                urls: urls,
+                editorId: editorId,
+                currentSelector: this.selector
             });
+            
+            if (editorId === this.selector && urls.length > 0) {
+                urls.forEach(url => {
+                    this.insertImageToEditor(url);
+                });
+            }
         });
         
-        return temp.innerHTML;
+        // Single event listener for image insertion to prevent duplicates
+        const handleImageEvent = (event) => {
+            const editorId = window.targetCustomEditorId;
+            
+            console.log('Custom editor received image event:', {
+                eventType: event.type,
+                editorId: editorId,
+                currentSelector: this.selector,
+                eventDetail: event.detail
+            });
+            
+            // Only process if this is the target editor
+            if (editorId !== this.selector) {
+                console.log('Not the target editor, skipping');
+                return;
+            }
+            
+            let images = [];
+            
+            // Handle different event types
+            if (event.type === 'select-image') {
+                const { target, images: eventImages } = event.detail;
+                if (target === 'wysiwyg' && eventImages) {
+                    images = eventImages;
+                }
+            } else if (event.type === 'insert-image-from-modal') {
+                const urls = event.detail.images || [];
+                images = urls.map(url => ({ url }));
+            }
+            
+            // Process images
+            if (images.length > 0) {
+                console.log(`Processing ${images.length} images for editor ${this.selector}`);
+                images.forEach((img, index) => {
+                    // Handle both full URL and relative path
+                    let url = img.url;
+                    if (url.includes('/uploads/')) {
+                        url = '/uploads/' + url.split('/uploads/').pop();
+                    } else if (!url.startsWith('http') && !url.startsWith('/')) {
+                        url = '/uploads/' + url;
+                    }
+                    console.log(`Processing image ${index + 1}:`, url);
+                    this.insertImageToEditor(url);
+                });
+            }
+        };
+        
+        // Add single event listeners
+        document.addEventListener('select-image', handleImageEvent);
+        window.addEventListener('select-image', handleImageEvent);
+        window.addEventListener('insert-image-from-modal', handleImageEvent);
     }
 
-    handlePlaceholder() {
-        const isEmpty = this.content.textContent.trim() === '' || 
-                       this.content.innerHTML === '<p><br></p>' ||
-                       this.content.innerHTML === '' ||
-                       this.content.innerHTML === '<div><br></div>';
-                       
-        if (isEmpty && !this.content.matches(':focus')) {
-            this.content.innerHTML = `<p class="placeholder" style="color: #999; font-style: italic; margin: 0;">${this.options.placeholder}</p>`;
-        } else if (this.content.innerHTML.includes(this.options.placeholder) || 
-                   this.content.querySelector('.placeholder')) {
-            this.content.innerHTML = '<p><br></p>';
-            this.content.focus();
-        }
-    }
-
-    updateHiddenInput() {
-        let content = this.content.innerHTML;
+    syncContent() {
+        // Sync content với textarea gốc
+        this.element.value = this.contentArea.innerHTML;
         
-        // Xóa placeholder nếu có
-        if (content.includes(this.options.placeholder) || 
-            content.includes('class="placeholder"')) {
-            content = '';
-        }
-        
-        this.hiddenInput.value = content;
+        // Trigger change event
+        const event = new Event('change', { bubbles: true });
+        this.element.dispatchEvent(event);
     }
 
     getContent() {
-        return this.content.innerHTML;
+        return this.contentArea.innerHTML;
     }
 
-    setContent(html) {
-        this.content.innerHTML = html;
-        this.updateHiddenInput();
+    setContent(content) {
+        this.contentArea.innerHTML = content;
+        this.syncContent();
+    }
+
+    focus() {
+        this.contentArea.focus();
     }
 
     destroy() {
-        const container = this.content.closest('.custom-rich-editor');
-        if (container) {
-            container.remove();
-            this.element.style.display = '';
+        if (this.editorContainer && this.editorContainer.parentNode) {
+            this.editorContainer.parentNode.removeChild(this.editorContainer);
         }
+        this.element.style.display = '';
     }
 }
 
-// Auto-initialize for elements with data-rich-editor attribute
-document.addEventListener('DOMContentLoaded', function() {
-    const editors = document.querySelectorAll('[data-rich-editor]');
-    editors.forEach(element => {
-        const options = element.dataset.richEditorOptions ? 
-                       JSON.parse(element.dataset.richEditorOptions) : {};
-        new CustomRichEditor('#' + element.id, options);
-    });
-});
-
-// Global functions for file manager integration
-window.customRichEditors = {};
-
-// Function to insert image from file manager
-window.insertImageToCustomEditor = function(imageUrl, editorId) {
-    const editor = window.customRichEditors[editorId];
-    if (editor && editor.content) {
-        editor.content.focus();
-        
-        // Remove placeholder if exists
-        const placeholder = editor.content.querySelector('.placeholder');
-        if (placeholder) {
-            editor.content.innerHTML = '';
-        }
-        
-        // Create image element with proper styling
-        const imgHtml = `<p><img src="${imageUrl}" style="max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px;" alt="Inserted image" /></p>`;
-        document.execCommand('insertHTML', false, imgHtml);
-        
-        editor.updateHiddenInput();
+// CSS cho placeholder
+const style = document.createElement('style');
+style.textContent = `
+    .editor-content[data-placeholder]:empty:before {
+        content: attr(data-placeholder);
+        color: #9ca3af;
+        pointer-events: none;
+        position: absolute;
     }
+    
+    .custom-rich-editor {
+        position: relative;
+    }
+    
+    .editor-content {
+        position: relative;
+    }
+    
+    .toolbar-btn:hover {
+        background: #e5e7eb !important;
+        color: #374151 !important;
+    }
+    
+    .toolbar-btn:active {
+        background: #d1d5db !important;
+    }
+`;
+document.head.appendChild(style);
+
+// Global function để khởi tạo editor
+window.initCustomRichEditor = function(selector, options = {}) {
+    return new CustomRichEditor(selector, options);
 };
-
-// Listen for the existing insertImageFromModal event
-window.addEventListener('insertImageFromModal', function(event) {
-    const imageUrl = event.detail.imageUrl || event.detail.url;
-    const editorId = window.targetCustomEditorId;
-    
-    if (editorId && imageUrl) {
-        window.insertImageToCustomEditor(imageUrl, editorId);
-    }
-});
-
-// Listen for select-image event (Alpine.js)
-document.addEventListener('select-image', function(event) {
-    const imageUrl = event.detail.url || event.detail.imageUrl;
-    const editorId = window.targetCustomEditorId;
-    
-    if (editorId && imageUrl) {
-        window.insertImageToCustomEditor(imageUrl, editorId);
-    }
-});
-
-// Global function to be called by file manager
-window.insertToWysiwyg = function(imageUrl) {
-    const editorId = window.targetCustomEditorId;
-    if (editorId) {
-        window.insertImageToCustomEditor(imageUrl, editorId);
-    }
-};
-
-// Function to open file manager for specific editor
-window.openFileManagerForEditor = function(editorSelector) {
-    const editorId = editorSelector.replace('#', '');
-    
-    window.targetCustomEditorId = editorId; // Set target editor ID
-    const event = new CustomEvent('open-avatar-manager', {
-        detail: {
-            target: editorId,
-            mode: 'wysiwyg'
-        }
-    });
-    document.dispatchEvent(event);
-};
-
-// Listen for file manager events
-window.addEventListener('insert-image-from-modal', function(event) {
-    const urls = event.detail.images || [];
-    const editorId = window.targetCustomEditorId;
-    
-    if (editorId && urls.length > 0) {
-        urls.forEach(url => {
-            window.insertImageToCustomEditor(url, editorId);
-        });
-    }
-});
-
-// Export for manual initialization
-window.CustomRichEditor = CustomRichEditor;
-
-// Test event dispatch
-const event = new CustomEvent('insert-image-from-modal', {
-        detail: {
-            images: [{ url: '/uploads/default-image.jpg' }]
-        }
-    });
-    window.dispatchEvent(event);

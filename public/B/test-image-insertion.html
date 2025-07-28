@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Image Insertion</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/custom-rich-editor.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                Test Image Insertion
+            </h1>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Test Custom Editor</h2>
+                
+                <!-- Hidden textarea -->
+                <textarea id="test-editor" name="content" style="display: none;"></textarea>
+                
+                <!-- Custom editor -->
+                <div id="custom-editor-test"></div>
+                
+                <div class="mt-6 flex gap-4">
+                    <button id="test-file-manager" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Test File Manager
+                    </button>
+                    <button id="test-modal" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Test Modal
+                    </button>
+                    <button id="test-direct-insert" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Test Direct Insert
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Debug Info</h2>
+                <div id="debug-info" class="bg-gray-50 p-4 rounded-lg border font-mono text-sm">
+                    Waiting for events...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/custom-rich-editor.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Khởi tạo editor
+            const editor = initCustomRichEditor('#test-editor', {
+                height: 300,
+                placeholder: 'Test image insertion...'
+            });
+            
+            // Debug function
+            function logDebug(message) {
+                const debugDiv = document.getElementById('debug-info');
+                const timestamp = new Date().toLocaleTimeString();
+                debugDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+                console.log(message);
+            }
+            
+            // Test file manager
+            document.getElementById('test-file-manager').addEventListener('click', function() {
+                logDebug('Testing file manager...');
+                window.targetCustomEditorId = '#test-editor';
+                
+                // Simulate file manager call
+                if (window.openFileManager) {
+                    window.openFileManager('wysiwyg');
+                } else {
+                    logDebug('openFileManager not found, using fallback');
+                    editor.createImageModal();
+                }
+            });
+            
+            // Test modal
+            document.getElementById('test-modal').addEventListener('click', function() {
+                logDebug('Testing modal...');
+                editor.createImageModal();
+            });
+            
+            // Test direct insert
+            document.getElementById('test-direct-insert').addEventListener('click', function() {
+                logDebug('Testing direct insert...');
+                const testUrl = 'https://via.placeholder.com/300x200/3b82f6/ffffff?text=Test+Image';
+                editor.insertImageToEditor(testUrl);
+            });
+            
+            // Listen for events
+            window.addEventListener('insert-image-from-modal', function(event) {
+                logDebug(`Received insert-image-from-modal event: ${JSON.stringify(event.detail)}`);
+            });
+            
+            // Override openFileManager for testing
+            if (!window.openFileManager) {
+                window.openFileManager = function(type) {
+                    logDebug(`openFileManager called with type: ${type}`);
+                    // Simulate file selection after 2 seconds
+                    setTimeout(() => {
+                        const testUrls = [
+                            'https://via.placeholder.com/400x300/10b981/ffffff?text=Image+1',
+                            'https://via.placeholder.com/400x300/f59e0b/ffffff?text=Image+2'
+                        ];
+                        
+                        const event = new CustomEvent('insert-image-from-modal', {
+                            detail: {
+                                images: testUrls,
+                                editorId: window.targetCustomEditorId
+                            }
+                        });
+                        window.dispatchEvent(event);
+                        logDebug('Simulated image selection completed');
+                    }, 2000);
+                };
+            }
+            
+            logDebug('Test page loaded successfully');
+        });
+    </script>
+</body>
+</html> 

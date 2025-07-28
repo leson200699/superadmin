@@ -1,11 +1,7 @@
 <?= $this->extend('B/master') ?>
-<?= $this->section('css') ?>
-<link rel="stylesheet" href="<?= base_url('B/assets/css/custom-rich-editor.css') ?>">
-<link rel="stylesheet" href="<?= base_url('B/assets/css/custom-rich-editor-advanced.css') ?>">
-<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <?php helper('form'); ?>
-<div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)" x-init="initEditors()">
+<div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)">
     <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
         <?=$title?>
     </h1>
@@ -31,24 +27,33 @@
                     </div>
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Nội dung <span class="text-red-500">*</span></label>
-                        <button type="button"
-                            class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                            @click="openFileManager('content-editor')">
+                 <!--        <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5" @click="
+                            window.targetTinyEditorId = 'editor';
+                            selectionTarget = 'wysiwyg';
+                            selectionMode = 'multiple'; // 👈 Sửa từ 'single' thành 'multiple'
+                            selectedModalImages = [];
+                            showFileManager = true;
+                        ">
                             <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
-                        </button>
-                        
-                        <textarea id="content-editor" name="content" rows="12" 
-                                  data-rich-editor
-                                  data-rich-editor-options='{"height": "400px", "placeholder": "Soạn thảo nội dung bài viết...", "toolbar": "full", "allowImageUpload": false}'
-                                  class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base"></textarea>
+                        </button> -->
+
+
+                    <button type="button"
+                      class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
+                      @click="openFileManager('wysiwyg'); window.targetCustomEditorId = '#editor'">
+                      <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
+                    </button>
+
+
+
+
+
+                        <textarea id="editor" name="content" rows="35" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung bài viết..." style="display: none;"></textarea>
+                        <div id="custom-editor-container"></div>
                     </div>
-                </div>
-            </div>
-            <div class="bg-white p-5 rounded-lg shadow">
-                <div class="space-y-5">
                     <div>
                         <label for="name_en" class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết [en]<span class="text-red-500">*</span></label>
-                        <input type="text" id="name_en" name="name_en" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tiêu đề..." x-model="newsTitleEn" @input="generateSlug()">
+                        <input type="text" id="name_en" name="name_en" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tiêu đề..." x-model="newsTitle" @input="generateSlug()">
                     </div>
                     <div>
                         <label for="caption_en" class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt / Trích dẫn [en]</label>
@@ -56,16 +61,21 @@
                     </div>
                     <div>
                         <label for="content_en" class="block text-sm font-medium text-gray-700 mb-1">Nội dung [en]<span class="text-red-500">*</span></label>
-                        <button type="button"
-                            class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                            @click="openFileManager('content-editor-en')">
-                            <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
-                        </button>
-                        
-                        <textarea id="content-editor-en" name="content_en" rows="10"
-                                  data-rich-editor
-                                  data-rich-editor-options='{"height": "300px", "placeholder": "Soạn thảo nội dung bài viết tiếng Anh...", "toolbar": "full", "allowImageUpload": false}'
-                                  class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base"></textarea>
+
+
+
+                            <button type="button"
+                      class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
+                      @click="openFileManager('wysiwyg'); window.targetCustomEditorId = '#editor1'">
+                      <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
+                    </button>
+
+
+
+
+
+                        <textarea id="editor1" name="content_en" rows="15" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung bài viết..." style="display: none;"></textarea>
+                        <div id="custom-editor-container-en"></div>
                     </div>
                 </div>
             </div>
@@ -210,103 +220,24 @@
     <div x-html="modalHtml" x-cloak></div>
 </div>
 <?= $this->endSection() ?>
-
 <?= $this->section('script') ?>
-<script src="<?= base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
-<script src="<?= base_url('B/assets/js/custom-rich-editor-advanced.js') ?>"></script>
-<script src="<?= base_url('B/assets/js/handle.js') ?>"></script>
-
+<link rel="stylesheet" href="<?php echo  base_url('B/assets/css/custom-rich-editor.css') ?>">
+<script src="<?php echo  base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
+<script src="<?php echo  base_url('B/assets/js/handle.js') ?>"></script>
 <script>
-    function newsFormData() {
-        return {
-            newsTitleVi: '',
-            newsTitleEn: '',
-            newsSlug: '',
-            featuredImageUrl: '',
-            galleryImageUrls: [],
-            galleryImageIds: [],
-            modalHtml: '',
-            activeEditorId: null,
-
-            generateSlug() {
-                this.newsSlug = this.slugify(this.newsTitleVi);
-            },
-
-            slugify(text) {
-                if (!text) return '';
-                return text.toString().toLowerCase()
-                    .replace(/\s+/g, '-')
-                    .replace(/[^\w\-]+/g, '')
-                    .replace(/\-\-+/g, '-')
-                    .replace(/^-+/, '')
-                    .replace(/-+$/, '');
-            },
-
-            openFileManager(type) {
-                this.activeEditorId = type;
-                let url = `/admin/filemanager?type=${type}`;
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        this.modalHtml = html;
-                    });
-            },
-
-            handleImageSelection(detail) {
-                const { images } = detail;
-                const type = this.activeEditorId;
-
-                if (type === 'featured') {
-                    this.featuredImageUrl = images[0]?.url;
-                } else if (type === 'gallery') {
-                    images.forEach(img => {
-                        if (!this.galleryImageIds.includes(img.id)) {
-                            this.galleryImageUrls.push(img.url);
-                            this.galleryImageIds.push(img.id);
-                        }
-                    });
-                } else if (type && type.startsWith('content-editor')) {
-                    if (window.customRichEditors && window.customRichEditors[type]) {
-                        const editor = window.customRichEditors[type];
-                        images.forEach(img => {
-                            editor.content.focus();
-                            document.execCommand('insertImage', false, img.url);
-                            editor.updateHiddenInput();
-                        });
-                    }
-                }
-                this.modalHtml = ''; // Close modal
-                this.activeEditorId = null;
-            },
-
-            removeImage(type, index = null) {
-                if (type === 'featured') {
-                    this.featuredImageUrl = '';
-                } else if (type === 'gallery' && index !== null) {
-                    this.galleryImageUrls.splice(index, 1);
-                    this.galleryImageIds.splice(index, 1);
-                }
-            },
-            
-            initEditors() {
-                setTimeout(() => {
-                    if (!window.customRichEditors) {
-                        window.customRichEditors = {};
-                    }
-                    document.querySelectorAll('[data-rich-editor]').forEach(el => {
-                        const id = el.id;
-                        if (!window.customRichEditors[id]) { 
-                            const options = el.dataset.richEditorOptions ? JSON.parse(el.dataset.richEditorOptions) : {};
-                            window.customRichEditors[id] = new CustomRichEditor('#' + id, options);
-                        }
-                    });
-                }, 150);
-            }
-        }
-    }
-
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('newsFormData', newsFormData);
+document.addEventListener('DOMContentLoaded', function() {
+    // Khởi tạo custom rich editor cho nội dung tiếng Việt
+    const editorVi = initCustomRichEditor('#editor', {
+        height: 400,
+        placeholder: 'Soạn thảo nội dung bài viết...'
     });
+    
+    // Khởi tạo custom rich editor cho nội dung tiếng Anh
+    const editorEn = initCustomRichEditor('#editor1', {
+        height: 300,
+        placeholder: 'Soạn thảo nội dung bài viết...'
+    });
+});
 </script>
+
 <?= $this->endSection() ?>

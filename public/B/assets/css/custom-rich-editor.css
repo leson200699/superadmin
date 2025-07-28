@@ -1,178 +1,134 @@
-/* Custom Rich Text Editor Styles */
+/* Custom Rich Editor Styles */
 .custom-rich-editor {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: white;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    margin-bottom: 20px;
-    width: 100%;
-    display: block;
-    clear: both;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.custom-rich-editor:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .editor-toolbar {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem;
     display: flex;
+    align-items: center;
+    gap: 0.25rem;
     flex-wrap: wrap;
-    gap: 4px;
-    padding: 12px;
-    border: 1px solid #e1e5e9;
-    border-bottom: none;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 8px 8px 0 0;
-    position: relative;
-}
-
-.toolbar-group {
-    display: flex;
-    gap: 2px;
-    margin-right: 12px;
-    padding-right: 12px;
-    border-right: 1px solid #dee2e6;
-}
-
-.toolbar-group:last-child {
-    border-right: none;
-    margin-right: 0;
-    padding-right: 0;
+    min-height: 48px;
 }
 
 .toolbar-btn {
-    padding: 8px 10px;
-    border: 1px solid #dee2e6;
-    background: white;
-    border-radius: 6px;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.25rem;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    min-width: 34px;
-    height: 34px;
+    color: #6b7280;
+    transition: all 0.2s ease-in-out;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    user-select: none;
-    color: #495057;
-}
-
-.toolbar-btn i {
-    color: #495057;
+    width: 36px;
+    height: 36px;
     font-size: 14px;
+    position: relative;
 }
 
 .toolbar-btn:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background: #e5e7eb !important;
+    color: #374151 !important;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.toolbar-btn:hover i {
-    color: #343a40;
 }
 
 .toolbar-btn:active {
+    background: #d1d5db !important;
     transform: translateY(0);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-btn.active {
-    background: #007bff;
-    color: white;
-    border-color: #007bff;
+    background: #3b82f6 !important;
+    color: white !important;
 }
 
-.toolbar-btn.active i {
-    color: white;
+.toolbar-btn i {
+    font-size: 14px;
 }
 
 .editor-content {
-    min-height: 300px;
+    min-height: 400px;
+    padding: 1rem;
     outline: none;
-    padding: 20px;
-    border: 1px solid #e1e5e9;
-    border-top: none;
-    background: white;
-    font-family: inherit;
-    line-height: 1.7;
-    color: #212529 !important;
-    border-radius: 0 0 8px 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #374151;
+    position: relative;
     overflow-y: auto;
-    max-height: 600px;
-    background-color: #ffffff !important; /* Force white background */
-    color: #000000 !important; /* Force black text */
 }
 
-.editor-content:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+.editor-content:empty:before {
+    content: attr(data-placeholder);
+    color: #9ca3af;
+    pointer-events: none;
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    font-style: italic;
 }
 
-/* Content Styling */
-.editor-content h1 {
-    font-size: 2.5em;
-    font-weight: 700;
-    margin: 1em 0 0.5em 0;
-    color: #212529 !important;
-    line-height: 1.2;
-}
-
-.editor-content h2 {
-    font-size: 2em;
-    font-weight: 600;
-    margin: 0.8em 0 0.4em 0;
-    color: #212529 !important;
-    line-height: 1.3;
-}
-
-.editor-content h3 {
-    font-size: 1.5em;
-    font-weight: 600;
-    margin: 0.7em 0 0.3em 0;
-    color: #212529 !important;
-    line-height: 1.4;
-}
-
-.editor-content h4 {
-    font-size: 1.25em;
-    font-weight: 600;
-    margin: 0.6em 0 0.3em 0;
-    color: #212529 !important;
-}
-
-.editor-content h5 {
-    font-size: 1.1em;
-    font-weight: 600;
-    margin: 0.6em 0 0.3em 0;
-    color: #212529 !important;
-}
-
-.editor-content h6 {
-    font-size: 1em;
-    font-weight: 600;
-    margin: 0.6em 0 0.3em 0;
-    color: #212529 !important;
+.editor-content:focus:empty:before {
+    display: none;
 }
 
 .editor-content p {
-    margin: 0.8em 0;
-    line-height: 1.7;
-    color: #212529 !important;
+    margin: 0 0 0.75rem 0;
 }
 
-.editor-content * {
-    color: #212529 !important;
+.editor-content p:last-child {
+    margin-bottom: 0;
 }
 
-.editor-content .placeholder {
-    color: #999 !important;
-    font-style: italic;
-    user-select: none;
-    pointer-events: none;
+.editor-content h1,
+.editor-content h2,
+.editor-content h3,
+.editor-content h4,
+.editor-content h5,
+.editor-content h6 {
+    margin: 1rem 0 0.5rem 0;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1f2937;
 }
 
-.editor-content ul, .editor-content ol {
-    margin: 1em 0;
-    padding-left: 2em;
+.editor-content h1 { 
+    font-size: 1.875rem; 
+    color: #111827;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+.editor-content h2 { 
+    font-size: 1.5rem; 
+    color: #111827;
+}
+.editor-content h3 { 
+    font-size: 1.25rem; 
+    color: #374151;
+}
+.editor-content h4 { font-size: 1.125rem; }
+.editor-content h5 { font-size: 1rem; }
+.editor-content h6 { font-size: 0.875rem; }
+
+.editor-content ul,
+.editor-content ol {
+    margin: 0.75rem 0;
+    padding-left: 2rem;
 }
 
 .editor-content ul {
@@ -184,297 +140,168 @@
 }
 
 .editor-content li {
-    margin-bottom: 0.5em;
+    margin: 0.25rem 0;
     line-height: 1.6;
 }
 
-.editor-content ul ul, .editor-content ol ol {
-    margin: 0.5em 0;
+.editor-content ul ul,
+.editor-content ol ol {
+    margin: 0.25rem 0;
+}
+
+.editor-content ul ul {
+    list-style-type: circle;
+}
+
+.editor-content ul ul ul {
+    list-style-type: square;
 }
 
 .editor-content blockquote {
-    border-left: 4px solid #007bff;
-    margin: 1.5em 0;
-    padding: 1em 1.5em;
-    color: #6c757d;
-    background: #f8f9fa;
-    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid #3b82f6;
+    background: #f8fafc;
     font-style: italic;
-}
-
-.editor-content blockquote p {
-    margin: 0;
-}
-
-.editor-content code {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-    font-size: 0.9em;
-    color: #e83e8c;
+    color: #64748b;
 }
 
 .editor-content pre {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 1em;
+    background: #f1f5f9;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    font-family: 'Courier New', monospace;
+    margin: 0.75rem 0;
     overflow-x: auto;
-    margin: 1em 0;
+    border: 1px solid #e2e8f0;
 }
 
-.editor-content pre code {
-    background: transparent;
-    border: none;
-    padding: 0;
-    color: #212529;
-}
-
-.editor-content a {
-    color: #007bff;
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.editor-content a:hover {
-    color: #0056b3;
-    border-bottom-color: #0056b3;
+.editor-content code {
+    background: #f1f5f9;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    color: #dc2626;
 }
 
 .editor-content img {
     max-width: 100%;
     height: auto;
-    border-radius: 6px;
-    margin: 1em 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
+    border-radius: 0.375rem;
+    margin: 0.5rem 0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
-.editor-content img:hover {
-    transform: scale(1.02);
+.editor-content a {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.editor-content a:hover {
+    color: #2563eb;
 }
 
 .editor-content table {
     width: 100%;
     border-collapse: collapse;
-    margin: 1.5em 0;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
-    overflow: hidden;
+    margin: 0.75rem 0;
 }
 
 .editor-content table th,
 .editor-content table td {
-    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem;
     text-align: left;
-    border-bottom: 1px solid #e9ecef;
 }
 
 .editor-content table th {
-    background: #f8f9fa;
+    background: #f9fafb;
     font-weight: 600;
-    color: #495057;
 }
 
-.editor-content table tr:hover {
-    background: #f8f9fa;
-}
-
-.editor-content table tr:last-child td {
-    border-bottom: none;
-}
-
-.editor-content hr {
-    border: none;
-    border-top: 2px solid #e9ecef;
-    margin: 2em 0;
-    border-radius: 1px;
-}
-
-/* Focus styles */
-.editor-content:focus {
-    outline: none;
-}
-
-/* Placeholder styling */
-.editor-content p[style*="color: #999"] {
-    font-style: italic;
-    user-select: none;
-    pointer-events: none;
-}
-
-/* Selection styles */
-.editor-content ::selection {
-    background: rgba(0, 123, 255, 0.2);
-}
-
-/* Responsive */
+/* Responsive Design */
 @media (max-width: 768px) {
     .editor-toolbar {
-        padding: 8px;
-        gap: 2px;
-    }
-    
-    .toolbar-group {
-        margin-right: 8px;
-        padding-right: 8px;
+        padding: 0.5rem;
+        gap: 0.125rem;
     }
     
     .toolbar-btn {
-        padding: 6px 8px;
-        min-width: 30px;
-        height: 30px;
-        font-size: 12px;
+        width: 32px;
+        height: 32px;
+        padding: 0.375rem;
     }
     
     .editor-content {
-        padding: 15px;
-        min-height: 250px;
+        padding: 0.75rem;
+        font-size: 16px; /* Prevent zoom on iOS */
     }
-}
-
-@media (max-width: 480px) {
-    .editor-toolbar {
-        padding: 6px;
-    }
-    
-    .toolbar-btn {
-        padding: 4px 6px;
-        min-width: 28px;
-        height: 28px;
-        font-size: 11px;
-    }
-    
-    .editor-content {
-        padding: 12px;
-        min-height: 200px;
-    }
-}
-
-/* Fullscreen mode */
-.custom-rich-editor.fullscreen {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: white !important;
-    z-index: 9999 !important;
-    padding: 20px !important;
-    box-sizing: border-box !important;
-}
-
-.custom-rich-editor.fullscreen .editor-content {
-    height: calc(100% - 80px) !important;
-    max-height: none !important;
-}
-
-/* Animation for toolbar buttons */
-@keyframes buttonPress {
-    0% { transform: scale(1); }
-    50% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-}
-
-.toolbar-btn:active {
-    animation: buttonPress 0.1s ease;
-}
-
-/* Custom scrollbar for content area */
-.editor-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.editor-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.editor-content::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-
-.editor-content::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Code view styles */
-.editor-content.code-view {
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
-    font-size: 13px !important;
-    white-space: pre-wrap !important;
-    background: #2d3748 !important;
-    color: #e2e8f0 !important;
-}
-
-/* Loading animation for image upload */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.editor-content img[src*="data:image/svg+xml"] {
-    animation: spin 1s linear infinite;
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
     .custom-rich-editor {
-        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+        background: #1f2937;
+        border-color: #374151;
     }
     
     .editor-toolbar {
-        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-        border-color: #4a5568;
+        background: #111827;
+        border-color: #374151;
     }
     
-    .toolbar-group {
-        border-color: #4a5568;
+    .editor-content {
+        color: #f9fafb;
     }
     
     .toolbar-btn {
-        background: #2d3748;
-        border-color: #4a5568;
-        color: #e2e8f0;
+        color: #9ca3af;
     }
     
     .toolbar-btn:hover {
-        background: #4a5568;
-        border-color: #718096;
+        background: #374151 !important;
+        color: #f9fafb !important;
     }
     
-    .editor-content {
-        background: #1a202c;
-        border-color: #4a5568;
-        color: #e2e8f0;
-    }
-    
-    .editor-content:focus {
-        border-color: #63b3ed;
-        box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.1);
+    .editor-content:empty:before {
+        color: #6b7280;
     }
 }
 
-/* Print styles */
-@media print {
-    .editor-toolbar {
-        display: none !important;
-    }
-    
-    .custom-rich-editor {
-        box-shadow: none !important;
-        border: none !important;
-    }
-    
-    .editor-content {
-        border: none !important;
-        padding: 0 !important;
-        max-height: none !important;
-        overflow: visible !important;
-    }
+/* Animation for smooth transitions */
+.custom-rich-editor * {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Focus states */
+.editor-content:focus {
+    outline: none;
+}
+
+/* Selection styles */
+.editor-content ::selection {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.editor-content ::-moz-selection {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+/* Scrollbar styling */
+.editor-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.editor-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.editor-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.editor-content::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }

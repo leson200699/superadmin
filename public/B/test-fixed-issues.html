@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fixed Issues</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/custom-rich-editor.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                Test Fixed Issues
+            </h1>
+            
+            <div x-data="fixedTestData()" @select-image.window="handleImageSelection($event.detail)">
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Custom Rich Editor</h2>
+                    
+                    <!-- Hidden textarea -->
+                    <textarea id="fixed-editor" name="content" style="display: none;"></textarea>
+                    
+                    <!-- Custom editor -->
+                    <div id="custom-editor-fixed"></div>
+                    
+                    <div class="mt-6 flex gap-4 flex-wrap">
+                        <button @click="testSingleImage()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-image mr-2"></i>Test Single Image
+                        </button>
+                        <button @click="testMultipleImages()" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-images mr-2"></i>Test Multiple Images
+                        </button>
+                        <button @click="testToolbarButton()" 
+                                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-tools mr-2"></i>Test Toolbar Button
+                        </button>
+                        <button @click="testExternalButton()" 
+                                class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-external-link-alt mr-2"></i>Test External Button
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Debug Info</h2>
+                    <div id="debug-info" class="bg-gray-50 p-4 rounded-lg border font-mono text-sm h-64 overflow-y-auto">
+                        Ready for testing...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/custom-rich-editor.js"></script>
+    <script>
+        function fixedTestData() {
+            return {
+                notification: { show: false, message: '', type: 'info' },
+                showNotification(message, type = 'info') {
+                    this.notification = { show: true, message, type };
+                    setTimeout(() => this.notification.show = false, 3500);
+                },
+                
+                // File manager functions
+                showFileManager: false,
+                selectionMode: 'multiple',
+                selectionTarget: null,
+                selectedModalImages: [],
+                
+                openFileManager(target) {
+                    log(`Alpine openFileManager called with target: ${target}`);
+                    this.selectionTarget = target;
+                    this.selectionMode = (target === 'featured') ? 'single' : 'multiple';
+                    this.selectedModalImages = [];
+                    this.showFileManager = true;
+                    
+                    // Simulate file selection after 2 seconds
+                    setTimeout(() => {
+                        this.simulateFileSelection();
+                    }, 2000);
+                },
+                
+                simulateFileSelection() {
+                    log('Simulating file selection...');
+                    
+                    // Test with single image
+                    const testImages = [
+                        { id: 1, url: 'https://via.placeholder.com/400x300/3b82f6/ffffff?text=Single+Image' }
+                    ];
+                    
+                    this.selectedModalImages = testImages;
+                    
+                    // Dispatch select-image event
+                    this.$dispatch('select-image', {
+                        target: 'wysiwyg',
+                        images: testImages
+                    });
+                    
+                    this.showFileManager = false;
+                    log('File selection simulation completed');
+                },
+                
+                handleImageSelection({ target, images }) {
+                    log(`Alpine received select-image event: target=${target}, images=${images?.length || 0}`);
+                    
+                    if (!images || images.length === 0) return;
+                    
+                    switch (target) {
+                        case 'wysiwyg':
+                            log(`Processing ${images.length} images for wysiwyg`);
+                            break;
+                        default:
+                            log(`Unknown target: ${target}`);
+                    }
+                },
+                
+                testSingleImage() {
+                    log('Testing single image insertion...');
+                    
+                    // Set target
+                    window.targetCustomEditorId = '#fixed-editor';
+                    
+                    // Simulate single image selection
+                    const testImages = [
+                        { id: 1, url: 'https://via.placeholder.com/400x300/10b981/ffffff?text=Single+Test' }
+                    ];
+                    
+                    this.$dispatch('select-image', {
+                        target: 'wysiwyg',
+                        images: testImages
+                    });
+                    
+                    log('Single image test completed');
+                },
+                
+                testMultipleImages() {
+                    log('Testing multiple image insertion...');
+                    
+                    // Set target
+                    window.targetCustomEditorId = '#fixed-editor';
+                    
+                    // Simulate multiple image selection
+                    const testImages = [
+                        { id: 1, url: 'https://via.placeholder.com/400x300/ef4444/ffffff?text=Image+1' },
+                        { id: 2, url: 'https://via.placeholder.com/400x300/8b5cf6/ffffff?text=Image+2' },
+                        { id: 3, url: 'https://via.placeholder.com/400x300/f59e0b/ffffff?text=Image+3' }
+                    ];
+                    
+                    this.$dispatch('select-image', {
+                        target: 'wysiwyg',
+                        images: testImages
+                    });
+                    
+                    log('Multiple images test completed');
+                },
+                
+                testToolbarButton() {
+                    log('Testing toolbar button...');
+                    
+                    if (window.fixedEditorInstance) {
+                        // Simulate clicking the image button in toolbar
+                        window.fixedEditorInstance.insertImageFromFileManager();
+                        log('Toolbar button test initiated');
+                    } else {
+                        log('Editor instance not found');
+                    }
+                },
+                
+                testExternalButton() {
+                    log('Testing external button...');
+                    
+                    // Set target
+                    window.targetCustomEditorId = '#fixed-editor';
+                    
+                    // Simulate external button click
+                    this.openFileManager('wysiwyg');
+                }
+            }
+        }
+        
+        // Log function
+        function log(message) {
+            const debugDiv = document.getElementById('debug-info');
+            const timestamp = new Date().toLocaleTimeString();
+            debugDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Khởi tạo editor
+            const editor = initCustomRichEditor('#fixed-editor', {
+                height: 300,
+                placeholder: 'Test fixed issues...'
+            });
+            
+            // Store editor instance globally
+            window.fixedEditorInstance = editor;
+            
+            log('Fixed test page loaded successfully');
+        });
+    </script>
+</body>
+</html> 

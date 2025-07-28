@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Image Test</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/custom-rich-editor.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                Simple Image Insertion Test
+            </h1>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Custom Rich Editor</h2>
+                
+                <!-- Hidden textarea -->
+                <textarea id="simple-editor" name="content" style="display: none;"></textarea>
+                
+                <!-- Custom editor -->
+                <div id="custom-editor-simple"></div>
+                
+                <div class="mt-6 flex gap-4">
+                    <button id="insert-image-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-image mr-2"></i>Chèn ảnh
+                    </button>
+                    <button id="test-event-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Test Event
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Console Log</h2>
+                <div id="console-log" class="bg-gray-50 p-4 rounded-lg border font-mono text-sm h-64 overflow-y-auto">
+                    Ready for testing...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/custom-rich-editor.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Khởi tạo editor
+            const editor = initCustomRichEditor('#simple-editor', {
+                height: 300,
+                placeholder: 'Bắt đầu soạn thảo...'
+            });
+            
+            // Log function
+            function log(message) {
+                const logDiv = document.getElementById('console-log');
+                const timestamp = new Date().toLocaleTimeString();
+                logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+                logDiv.scrollTop = logDiv.scrollHeight;
+                console.log(message);
+            }
+            
+            // Test insert image button
+            document.getElementById('insert-image-btn').addEventListener('click', function() {
+                log('Clicking insert image button...');
+                editor.insertImage();
+            });
+            
+            // Test event button
+            document.getElementById('test-event-btn').addEventListener('click', function() {
+                log('Testing event dispatch...');
+                window.targetCustomEditorId = '#simple-editor';
+                
+                const testUrls = [
+                    'https://via.placeholder.com/400x300/3b82f6/ffffff?text=Test+Image+1',
+                    'https://via.placeholder.com/400x300/10b981/ffffff?text=Test+Image+2'
+                ];
+                
+                const event = new CustomEvent('insert-image-from-modal', {
+                    detail: {
+                        images: testUrls
+                    }
+                });
+                
+                log(`Dispatching event with ${testUrls.length} images`);
+                window.dispatchEvent(event);
+            });
+            
+            // Listen for events
+            window.addEventListener('insert-image-from-modal', function(event) {
+                log(`Received insert-image-from-modal event: ${JSON.stringify(event.detail)}`);
+            });
+            
+            log('Page loaded successfully');
+        });
+    </script>
+</body>
+</html> 

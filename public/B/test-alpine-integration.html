@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Alpine.js Integration</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/custom-rich-editor.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                Test Alpine.js Integration
+            </h1>
+            
+            <div x-data="testData()" @select-image.window="handleImageSelection($event.detail)">
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Custom Rich Editor</h2>
+                    
+                    <!-- Hidden textarea -->
+                    <textarea id="alpine-editor" name="content" style="display: none;"></textarea>
+                    
+                    <!-- Custom editor -->
+                    <div id="custom-editor-alpine"></div>
+                    
+                    <div class="mt-6 flex gap-4">
+                        <button @click="openFileManager('wysiwyg'); window.targetCustomEditorId = '#alpine-editor'" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-image mr-2"></i>Chèn ảnh từ File Manager
+                        </button>
+                        <button @click="testAlpineEvent()" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            Test Alpine Event
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Debug Info</h2>
+                    <div id="debug-info" class="bg-gray-50 p-4 rounded-lg border font-mono text-sm h-64 overflow-y-auto">
+                        Ready for testing...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/custom-rich-editor.js"></script>
+    <script>
+        function testData() {
+            return {
+                notification: { show: false, message: '', type: 'info' },
+                showNotification(message, type = 'info') {
+                    this.notification = { show: true, message, type };
+                    setTimeout(() => this.notification.show = false, 3500);
+                },
+                
+                // File manager functions
+                showFileManager: false,
+                selectionMode: 'multiple',
+                selectionTarget: null,
+                selectedModalImages: [],
+                
+                openFileManager(target) {
+                    this.selectionTarget = target;
+                    this.selectionMode = (target === 'featured') ? 'single' : 'multiple';
+                    this.selectedModalImages = [];
+                    this.showFileManager = true;
+                    
+                    log(`Opening file manager for target: ${target}`);
+                },
+                
+                handleImageSelection({ target, images }) {
+                    log(`Alpine received select-image event: target=${target}, images=${images?.length || 0}`);
+                    
+                    if (!images || images.length === 0) return;
+                    
+                    switch (target) {
+                        case 'wysiwyg':
+                            log(`Processing ${images.length} images for wysiwyg`);
+                            // The custom editor should handle this via its event listener
+                            break;
+                        default:
+                            log(`Unknown target: ${target}`);
+                    }
+                },
+                
+                testAlpineEvent() {
+                    log('Testing Alpine event dispatch...');
+                    
+                    // Simulate file selection
+                    const testImages = [
+                        { id: 1, url: '/uploads/test1.jpg' },
+                        { id: 2, url: '/uploads/test2.jpg' }
+                    ];
+                    
+                    // Dispatch Alpine event
+                    this.$dispatch('select-image', {
+                        target: 'wysiwyg',
+                        images: testImages
+                    });
+                    
+                    log('Alpine event dispatched');
+                }
+            }
+        }
+        
+        // Log function
+        function log(message) {
+            const debugDiv = document.getElementById('debug-info');
+            const timestamp = new Date().toLocaleTimeString();
+            debugDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Khởi tạo editor
+            const editor = initCustomRichEditor('#alpine-editor', {
+                height: 300,
+                placeholder: 'Test Alpine.js integration...'
+            });
+            
+            // Listen for events
+            window.addEventListener('select-image', function(event) {
+                log(`Window received select-image event: ${JSON.stringify(event.detail)}`);
+            });
+            
+            document.addEventListener('select-image', function(event) {
+                log(`Document received select-image event: ${JSON.stringify(event.detail)}`);
+            });
+            
+            log('Page loaded successfully');
+        });
+    </script>
+</body>
+</html> 

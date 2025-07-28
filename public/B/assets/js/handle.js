@@ -171,9 +171,15 @@ function closeFileManagerModal() {
 window.addEventListener("insert-image-from-modal", function (event) {
     const urls = event.detail.images || [];
     
+    console.log('Handle.js received image event:', {
+        urls: urls,
+        targetTinyEditorId: window.targetTinyEditorId,
+        targetCustomEditorId: window.targetCustomEditorId
+    });
+    
     // Handle TinyMCE editors
-    if (typeof tinymce !== 'undefined') {
-        const editor = tinymce.get(window.targetTinyEditorId || 'editor');
+    if (typeof tinymce !== 'undefined' && window.targetTinyEditorId) {
+        const editor = tinymce.get(window.targetTinyEditorId);
         if (editor) {
             urls.forEach(url => {
                 editor.insertContent(`<img src="${url}" style="max-width:300px;height:auto;" /><br/>`);
@@ -184,9 +190,7 @@ window.addEventListener("insert-image-from-modal", function (event) {
     // Handle Custom Rich Editors
     if (window.targetCustomEditorId) {
         urls.forEach(url => {
-            if (window.insertImageToEditor) {
-                window.insertImageToEditor(url, window.targetCustomEditorId);
-            } else if (window.insertImageToCustomEditor) {
+            if (window.insertImageToCustomEditor) {
                 window.insertImageToCustomEditor(url, window.targetCustomEditorId);
             }
         });
