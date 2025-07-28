@@ -12,18 +12,7 @@ class CustomRichEditor {
             placeholder: options.placeholder || 'Nhập nội dung...',
             toolbar: options.toolbar || 'full',
             uploadUrl: options.uploadUrl || '/admin/upload-image',
-            allowImageUpload: options.allowImagfunction openFileManagerForEditor(editorSelector) {
-    const editorId = editorSelector.replace('#', '');
-    
-    // Set target editor ID for file manager
-    window.targetCustomEditorId = editorId;
-    window.targetTinyEditorId = editorId;
-    
-    // Try to trigger the existing openFileManager function
-    if (typeof openFileManager === 'function') {
-        openFileManager('wysiwyg');
-        return;
-    } false,
+            allowImageUpload: options.allowImageUpload || false,
             ...options
         };
         
@@ -68,6 +57,9 @@ class CustomRichEditor {
 
         // Set initial placeholder state
         this.handlePlaceholder();
+
+        editorContainer.style.backgroundColor = '#ffffff'; // Set white background
+        editorContainer.style.color = '#000000'; // Set black text color
     }
 
     createToolbar() {
@@ -570,37 +562,14 @@ window.insertToWysiwyg = function(imageUrl) {
 window.openFileManagerForEditor = function(editorSelector) {
     const editorId = editorSelector.replace('#', '');
     
-    // Set target editor ID for file manager
-    window.targetCustomEditorId = editorId;
-    window.targetTinyEditorId = editorId;
-    
-    // Try to trigger the existing openFileManager function
-    if (typeof openFileManager === 'function') {
-        openFileManager('wysiwyg');
-        return;
-    }
-    
-    // Try Alpine.js approach
-    const alpineElements = document.querySelectorAll('[x-data]');
-    for (let element of alpineElements) {
-        if (element._x_dataStack && element._x_dataStack[0]) {
-            const data = element._x_dataStack[0];
-            if (data.openFileManager && typeof data.openFileManager === 'function') {
-                data.openFileManager('wysiwyg');
-                return;
-            }
-        }
-    }
-    
-    // Fallback: dispatch custom event
-    const event = new CustomEvent('open-file-manager-for-editor', {
-        detail: { 
-            editorId: editorId,
-            target: 'wysiwyg'
+    window.targetCustomEditorId = editorId; // Set target editor ID
+    const event = new CustomEvent('open-avatar-manager', {
+        detail: {
+            target: editorId,
+            mode: 'wysiwyg'
         }
     });
     document.dispatchEvent(event);
-    window.dispatchEvent(event);
 };
 
 // Listen for file manager events
@@ -617,3 +586,11 @@ window.addEventListener('insert-image-from-modal', function(event) {
 
 // Export for manual initialization
 window.CustomRichEditor = CustomRichEditor;
+
+// Test event dispatch
+const event = new CustomEvent('insert-image-from-modal', {
+        detail: {
+            images: [{ url: '/uploads/default-image.jpg' }]
+        }
+    });
+    window.dispatchEvent(event);

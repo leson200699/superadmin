@@ -5,7 +5,7 @@
 <?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <?php helper('form'); ?>
-<div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)">
+<div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)" x-init="initEditors()">
     <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
         <?=$title?>
     </h1>
@@ -33,7 +33,7 @@
                         <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Nội dung <span class="text-red-500">*</span></label>
                         <button type="button"
                             class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                            onclick="openFileManagerForEditor('#content-editor')">
+                            @click="openFileManager('content-editor')">
                             <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
                         </button>
                         
@@ -42,9 +42,13 @@
                                   data-rich-editor-options='{"height": "400px", "placeholder": "Soạn thảo nội dung bài viết...", "toolbar": "full", "allowImageUpload": false}'
                                   class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base"></textarea>
                     </div>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-lg shadow">
+                <div class="space-y-5">
                     <div>
                         <label for="name_en" class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết [en]<span class="text-red-500">*</span></label>
-                        <input type="text" id="name_en" name="name_en" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tiêu đề..." x-model="newsTitle" @input="generateSlug()">
+                        <input type="text" id="name_en" name="name_en" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tiêu đề..." x-model="newsTitleEn" @input="generateSlug()">
                     </div>
                     <div>
                         <label for="caption_en" class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt / Trích dẫn [en]</label>
@@ -54,7 +58,7 @@
                         <label for="content_en" class="block text-sm font-medium text-gray-700 mb-1">Nội dung [en]<span class="text-red-500">*</span></label>
                         <button type="button"
                             class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                            onclick="openFileManagerForEditor('#content-editor-en')">
+                            @click="openFileManager('content-editor-en')">
                             <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
                         </button>
                         
@@ -213,148 +217,96 @@
 <script src="<?= base_url('B/assets/js/handle.js') ?>"></script>
 
 <script>
-// Initialize rich text editors
-document.addEventListener('DOMContentLoaded', function() {
-    // Make sure our global object exists
-    if (!window.customRichEditors) {
-        window.customRichEditors = {};
+    function newsFormData() {
+        return {
+            newsTitleVi: '',
+            newsTitleEn: '',
+            newsSlug: '',
+            featuredImageUrl: '',
+            galleryImageUrls: [],
+            galleryImageIds: [],
+            modalHtml: '',
+            activeEditorId: null,
+
+            generateSlug() {
+                this.newsSlug = this.slugify(this.newsTitleVi);
+            },
+
+            slugify(text) {
+                if (!text) return '';
+                return text.toString().toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\w\-]+/g, '')
+                    .replace(/\-\-+/g, '-')
+                    .replace(/^-+/, '')
+                    .replace(/-+$/, '');
+            },
+
+            openFileManager(type) {
+                this.activeEditorId = type;
+                let url = `/admin/filemanager?type=${type}`;
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        this.modalHtml = html;
+                    });
+            },
+
+            handleImageSelection(detail) {
+                const { images } = detail;
+                const type = this.activeEditorId;
+
+                if (type === 'featured') {
+                    this.featuredImageUrl = images[0]?.url;
+                } else if (type === 'gallery') {
+                    images.forEach(img => {
+                        if (!this.galleryImageIds.includes(img.id)) {
+                            this.galleryImageUrls.push(img.url);
+                            this.galleryImageIds.push(img.id);
+                        }
+                    });
+                } else if (type && type.startsWith('content-editor')) {
+                    if (window.customRichEditors && window.customRichEditors[type]) {
+                        const editor = window.customRichEditors[type];
+                        images.forEach(img => {
+                            editor.content.focus();
+                            document.execCommand('insertImage', false, img.url);
+                            editor.updateHiddenInput();
+                        });
+                    }
+                }
+                this.modalHtml = ''; // Close modal
+                this.activeEditorId = null;
+            },
+
+            removeImage(type, index = null) {
+                if (type === 'featured') {
+                    this.featuredImageUrl = '';
+                } else if (type === 'gallery' && index !== null) {
+                    this.galleryImageUrls.splice(index, 1);
+                    this.galleryImageIds.splice(index, 1);
+                }
+            },
+            
+            initEditors() {
+                setTimeout(() => {
+                    if (!window.customRichEditors) {
+                        window.customRichEditors = {};
+                    }
+                    document.querySelectorAll('[data-rich-editor]').forEach(el => {
+                        const id = el.id;
+                        if (!window.customRichEditors[id]) { 
+                            const options = el.dataset.richEditorOptions ? JSON.parse(el.dataset.richEditorOptions) : {};
+                            window.customRichEditors[id] = new CustomRichEditor('#' + id, options);
+                        }
+                    });
+                }, 150);
+            }
+        }
     }
-    
-    // Initialize editors with data-rich-editor attribute
-    document.querySelectorAll('[data-rich-editor]').forEach(function(el) {
-        const id = el.id;
-        const options = el.dataset.richEditorOptions ? JSON.parse(el.dataset.richEditorOptions) : {};
-        
-        // Create editor instance
-        const editor = new CustomRichEditor('#' + id, options);
-        
-        // Store in global object
-        window.customRichEditors[id] = editor;
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('newsFormData', newsFormData);
     });
-
-    // Handle form submission to ensure content is saved
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            // Ensure content is updated in hidden inputs
-            const contentValue = contentEditor.getContent();
-            const contentEnValue = contentEditorEn.getContent();
-            
-            // Create hidden inputs if they don't exist
-            let contentInput = document.querySelector('input[name="content"]');
-            if (!contentInput) {
-                contentInput = document.createElement('input');
-                contentInput.type = 'hidden';
-                contentInput.name = 'content';
-                form.appendChild(contentInput);
-            }
-            contentInput.value = contentValue;
-
-            let contentEnInput = document.querySelector('input[name="content_en"]');
-            if (!contentEnInput) {
-                contentEnInput = document.createElement('input');
-                contentEnInput.type = 'hidden';
-                contentEnInput.name = 'content_en';
-                form.appendChild(contentEnInput);
-            }
-            contentEnInput.value = contentEnValue;
-        });
-    }
-
-    // Integration with existing file manager
-    window.insertImageToEditor = function(imageUrl, editorId) {
-        // Check for custom editor first
-        if (window.customRichEditors && window.customRichEditors[editorId]) {
-            const editor = window.customRichEditors[editorId];
-            editor.content.focus();
-            document.execCommand('insertImage', false, imageUrl);
-            editor.updateHiddenInput();
-            return;
-        }
-        
-        // Otherwise, just insert to textarea - this handles direct textarea insertion too
-        const textarea = document.querySelector('#' + editorId);
-        if (textarea) {
-            const imgTag = `<img src="${imageUrl}" alt="Inserted image" style="max-width:100%;height:auto;">`;
-            
-            // If textarea, insert at cursor position or append
-            if (textarea.tagName === 'TEXTAREA') {
-                const startPos = textarea.selectionStart || 0;
-                const endPos = textarea.selectionEnd || startPos;
-                const textBefore = textarea.value.substring(0, startPos);
-                const textAfter = textarea.value.substring(endPos, textarea.value.length);
-                
-                textarea.value = textBefore + imgTag + textAfter;
-                textarea.focus();
-                textarea.selectionStart = startPos + imgTag.length;
-                textarea.selectionEnd = startPos + imgTag.length;
-            }
-        }
-    };
-});
-
-// Enhanced formatting functions for better user experience
-function enhancedFormatDoc(cmd, value = null, editorId = null) {
-    const editors = document.querySelectorAll('.editor-content');
-    const activeEditor = document.activeElement.closest('.custom-rich-editor')?.querySelector('.editor-content');
-    
-    if (activeEditor) {
-        activeEditor.focus();
-        if (cmd === 'createLink') {
-            if (!value) {
-                value = prompt('Nhập URL:', 'https://');
-            }
-            if (value) {
-                document.execCommand(cmd, false, value);
-            }
-        } else if (cmd === 'formatBlock') {
-            document.execCommand(cmd, false, value);
-        } else {
-            document.execCommand(cmd, false, value);
-        }
-    }
-}
-
-// Auto-save functionality (optional)
-let autoSaveInterval;
-function startAutoSave() {
-    autoSaveInterval = setInterval(function() {
-        const form = document.querySelector('form');
-        const formData = new FormData(form);
-        
-        // Save to localStorage as backup
-        const contentData = {
-            title: formData.get('name'),
-            content: document.querySelector('#content-editor').value,
-            content_en: document.querySelector('#content-editor-en').value,
-            timestamp: new Date().toISOString()
-        };
-        
-        localStorage.setItem('news_draft_' + Date.now(), JSON.stringify(contentData));
-        
-        // Keep only last 5 drafts
-        const drafts = Object.keys(localStorage).filter(key => key.startsWith('news_draft_'));
-        if (drafts.length > 5) {
-            drafts.sort();
-            localStorage.removeItem(drafts[0]);
-        }
-        
-        console.log('Draft auto-saved at', new Date().toLocaleTimeString());
-    }, 60000); // Auto-save every minute
-}
-
-// Start auto-save when user starts typing
-document.addEventListener('input', function(e) {
-    if (e.target.closest('.editor-content') && !autoSaveInterval) {
-        startAutoSave();
-    }
-});
-
-// Stop auto-save when form is submitted
-document.addEventListener('submit', function() {
-    if (autoSaveInterval) {
-        clearInterval(autoSaveInterval);
-    }
-});
 </script>
 <?= $this->endSection() ?>
