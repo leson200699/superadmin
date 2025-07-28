@@ -1,4 +1,8 @@
 <?= $this->extend('B/master') ?>
+<?= $this->section('css') ?>
+<link rel="stylesheet" href="<?= base_url('B/assets/css/custom-rich-editor.css') ?>">
+<link rel="stylesheet" href="<?= base_url('B/assets/css/custom-rich-editor-advanced.css') ?>">
+<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <?php helper('form'); ?>
 <div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)">
@@ -27,28 +31,16 @@
                     </div>
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Nội dung <span class="text-red-500">*</span></label>
-                 <!--        <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5" @click="
-                            window.targetTinyEditorId = 'editor';
-                            selectionTarget = 'wysiwyg';
-                            selectionMode = 'multiple'; // 👈 Sửa từ 'single' thành 'multiple'
-                            selectedModalImages = [];
-                            showFileManager = true;
-                        ">
+                        <button type="button"
+                            class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
+                            onclick="openFileManagerForEditor('#content-editor')">
                             <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
-                        </button> -->
-
-
-                    <button type="button"
-                      class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                      @click="openFileManager('wysiwyg'); window.targetTinyEditorId = 'editor'">
-                      <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
-                    </button>
-
-
-
-
-
-                        <textarea id="editor" name="content" rows="35" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung bài viết..."></textarea>
+                        </button>
+                        
+                        <textarea id="content-editor" name="content" 
+                                  data-rich-editor 
+                                  data-rich-editor-options='{"height": "400px", "placeholder": "Soạn thảo nội dung bài viết...", "toolbar": "full", "allowImageUpload": false}'
+                                  style="display: none;"></textarea>
                     </div>
                     <div>
                         <label for="name_en" class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết [en]<span class="text-red-500">*</span></label>
@@ -60,20 +52,16 @@
                     </div>
                     <div>
                         <label for="content_en" class="block text-sm font-medium text-gray-700 mb-1">Nội dung [en]<span class="text-red-500">*</span></label>
-
-
-
-                            <button type="button"
-                      class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                      @click="openFileManager('wysiwyg'); window.targetTinyEditorId = 'editor1'">
-                      <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
-                    </button>
-
-
-
-
-
-                        <textarea id="editor1" name="content_en" rows="15" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung bài viết..."></textarea>
+                        <button type="button"
+                            class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
+                            onclick="openFileManagerForEditor('#content-editor-en')">
+                            <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
+                        </button>
+                        
+                        <textarea id="content-editor-en" name="content_en" 
+                                  data-rich-editor 
+                                  data-rich-editor-options='{"height": "300px", "placeholder": "Soạn thảo nội dung bài viết tiếng Anh...", "toolbar": "full", "allowImageUpload": false}'
+                                  style="display: none;"></textarea>
                     </div>
                 </div>
             </div>
@@ -218,8 +206,138 @@
     <div x-html="modalHtml" x-cloak></div>
 </div>
 <?= $this->endSection() ?>
-<?= $this->section('script') ?>
-<script src="<?php echo  base_url('tinymce/js/tinymce/tinymce.min.js') ?>"></script>
-<script src="<?php echo  base_url('B/assets/js/handle.js') ?>"></script>
 
+<?= $this->section('script') ?>
+<script src="<?= base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
+<script src="<?= base_url('B/assets/js/custom-rich-editor-advanced.js') ?>"></script>
+<script src="<?= base_url('B/assets/js/handle.js') ?>"></script>
+
+<script>
+// Initialize custom rich text editors after page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Vietnamese content editor
+    const contentEditor = new CustomRichEditor('#content-editor', {
+        height: '400px',
+        placeholder: 'Soạn thảo nội dung bài viết...',
+        toolbar: 'full',
+        allowImageUpload: false, // Sử dụng file manager có sẵn
+        showWordCount: true
+    });
+
+    // Initialize English content editor
+    const contentEditorEn = new CustomRichEditor('#content-editor-en', {
+        height: '300px',
+        placeholder: 'Soạn thảo nội dung bài viết tiếng Anh...',
+        toolbar: 'full',
+        allowImageUpload: false, // Sử dụng file manager có sẵn
+        showWordCount: true
+    });
+
+    // Handle form submission to ensure content is saved
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Ensure content is updated in hidden inputs
+            const contentValue = contentEditor.getContent();
+            const contentEnValue = contentEditorEn.getContent();
+            
+            // Create hidden inputs if they don't exist
+            let contentInput = document.querySelector('input[name="content"]');
+            if (!contentInput) {
+                contentInput = document.createElement('input');
+                contentInput.type = 'hidden';
+                contentInput.name = 'content';
+                form.appendChild(contentInput);
+            }
+            contentInput.value = contentValue;
+
+            let contentEnInput = document.querySelector('input[name="content_en"]');
+            if (!contentEnInput) {
+                contentEnInput = document.createElement('input');
+                contentEnInput.type = 'hidden';
+                contentEnInput.name = 'content_en';
+                form.appendChild(contentEnInput);
+            }
+            contentEnInput.value = contentEnValue;
+        });
+    }
+
+    // Integration with existing image manager
+    window.insertImageToEditor = function(imageUrl, editorId) {
+        if (editorId === 'content-editor') {
+            contentEditor.content.focus();
+            document.execCommand('insertImage', false, imageUrl);
+            contentEditor.updateHiddenInput();
+        } else if (editorId === 'content-editor-en') {
+            contentEditorEn.content.focus();
+            document.execCommand('insertImage', false, imageUrl);
+            contentEditorEn.updateHiddenInput();
+        }
+    };
+});
+
+// Enhanced formatting functions for better user experience
+function enhancedFormatDoc(cmd, value = null, editorId = null) {
+    const editors = document.querySelectorAll('.editor-content');
+    const activeEditor = document.activeElement.closest('.custom-rich-editor')?.querySelector('.editor-content');
+    
+    if (activeEditor) {
+        activeEditor.focus();
+        if (cmd === 'createLink') {
+            if (!value) {
+                value = prompt('Nhập URL:', 'https://');
+            }
+            if (value) {
+                document.execCommand(cmd, false, value);
+            }
+        } else if (cmd === 'formatBlock') {
+            document.execCommand(cmd, false, value);
+        } else {
+            document.execCommand(cmd, false, value);
+        }
+    }
+}
+
+// Auto-save functionality (optional)
+let autoSaveInterval;
+function startAutoSave() {
+    autoSaveInterval = setInterval(function() {
+        const form = document.querySelector('form');
+        const formData = new FormData(form);
+        
+        // Save to localStorage as backup
+        const contentData = {
+            title: formData.get('name'),
+            content: document.querySelector('#content-editor').value,
+            content_en: document.querySelector('#content-editor-en').value,
+            timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('news_draft_' + Date.now(), JSON.stringify(contentData));
+        
+        // Keep only last 5 drafts
+        const drafts = Object.keys(localStorage).filter(key => key.startsWith('news_draft_'));
+        if (drafts.length > 5) {
+            drafts.sort();
+            localStorage.removeItem(drafts[0]);
+        }
+        
+        console.log('Draft auto-saved at', new Date().toLocaleTimeString());
+    }, 60000); // Auto-save every minute
+}
+
+// Start auto-save when user starts typing
+document.addEventListener('input', function(e) {
+    if (e.target.closest('.editor-content') && !autoSaveInterval) {
+        startAutoSave();
+    }
+});
+
+// Stop auto-save when form is submitted
+document.addEventListener('submit', function() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+    }
+});
+</script>
 <?= $this->endSection() ?>

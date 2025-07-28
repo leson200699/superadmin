@@ -33,9 +33,7 @@
 
         if (form) {
             form.addEventListener("submit", function (e) {
-                if (typeof tinymce !== "undefined") {
-                    tinymce.triggerSave(); // ✅ Ghi nội dung vào textarea trước khi submit
-                }
+                // Đã loại bỏ TinyMCE, không cần triggerSave nữa
             });
         }
     });

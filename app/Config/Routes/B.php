@@ -17,6 +17,13 @@ $routes->group('admin', function ($routes) {
     // Dashboard
     $routes->get('dashboard', 'B\Dashboard::index', ['as' => 'dashboard', 'filter' => 'admin-access']);
     $routes->post('dashboard/sendMessage', 'B\Dashboard::sendMessage', ['as' => 'dashboard-send', 'filter' => 'admin-access']);
+    
+    // Rich Text Editor routes
+    $routes->post('upload-image', 'B\EditorController::uploadImage', ['as' => 'admin-editor-upload-image', 'filter' => 'admin-access']);
+    $routes->post('editor/delete-image', 'B\EditorController::deleteImage', ['as' => 'admin-editor-delete-image', 'filter' => 'admin-access']);
+    $routes->get('editor/images', 'B\EditorController::getImages', ['as' => 'admin-editor-get-images', 'filter' => 'admin-access']);
+    $routes->post('editor/resize-image', 'B\EditorController::resizeImage', ['as' => 'admin-editor-resize-image', 'filter' => 'admin-access']);
+    
     // Khách hàng liên hệ
     $routes->get('message', 'B\Customer_Message::index', ['as' => 'admin-customer-message', 'filter' => 'admin-access']);
     // Auth login group
