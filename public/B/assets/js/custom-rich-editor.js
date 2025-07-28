@@ -14,6 +14,8 @@ class CustomRichEditor {
             ...options
         };
         
+        this.isSourceMode = false; // Thêm biến trạng thái source mode
+        
         this.init();
     }
 
@@ -69,6 +71,14 @@ class CustomRichEditor {
 
         // Thêm placeholder
         this.contentArea.setAttribute('data-placeholder', this.options.placeholder);
+        
+        // Load nội dung từ textarea gốc vào editor
+        if (this.element.value && this.element.value.trim()) {
+            console.log('Loading existing content:', this.element.value.substring(0, 100) + '...');
+            this.contentArea.innerHTML = this.element.value;
+        } else {
+            console.log('No existing content found in textarea');
+        }
 
         // Thêm vào container
         this.editorContainer.appendChild(this.toolbar);
@@ -97,8 +107,10 @@ class CustomRichEditor {
             { name: 'list-ul', icon: 'fas fa-list-ul', title: 'Bullet List', command: 'insertUnorderedList' },
             { name: 'list-ol', icon: 'fas fa-list-ol', title: 'Numbered List', command: 'insertOrderedList' },
             { name: 'separator3', type: 'separator' },
-            { name: 'image', icon: 'fas fa-image', title: 'Insert Image from File Manager', command: 'insertImageFromFileManager' },
-            { name: 'code', icon: 'fas fa-code', title: 'Code', command: 'insertCode' }
+            { name: 'code', icon: 'fas fa-code', title: 'Code', command: 'insertCode' },
+            { name: 'image-url', icon: 'fas fa-image', title: 'Insert Image from URL', command: 'insertImageFromUrl' },
+            { name: 'separator4', type: 'separator' },
+            { name: 'source', icon: 'fas fa-file-code', title: 'View Source', command: 'toggleSource' }
         ];
 
         toolbarButtons.forEach(button => {
@@ -182,6 +194,12 @@ class CustomRichEditor {
                 break;
             case 'insertCode':
                 this.insertCode();
+                break;
+            case 'insertImageFromUrl':
+                this.insertImageFromUrl();
+                break;
+            case 'toggleSource':
+                this.toggleSourceMode();
                 break;
         }
         this.contentArea.focus();
@@ -283,6 +301,13 @@ class CustomRichEditor {
         console.log('Creating fallback modal...');
         this.createImageModal();
     }
+
+    insertImageFromUrl() {
+        const url = prompt('Nhập URL hình ảnh:');
+        if (url && url.trim()) {
+            this.insertImageToEditor(this, url.trim());
+        }
+    }
     
     createImageModal() {
         console.log('Creating image modal fallback...');
@@ -360,15 +385,20 @@ class CustomRichEditor {
         }, 100);
     }
 
-    insertImageToEditor(url) {
+    insertImageToEditor(editorInstance, url) {
         console.log('Inserting image:', url);
         
         // Focus on content area first
-        this.contentArea.focus();
+        if (editorInstance && editorInstance.contentArea) {
+            editorInstance.contentArea.focus();
+        } else {
+            console.error('Invalid editor instance provided to insertImageToEditor');
+            return;
+        }
         
         const img = document.createElement('img');
         img.src = url;
-        img.style.cssText = 'max-width: 300px; height: auto; margin: 0.5rem 0; display: block;';
+        img.style.cssText = 'max-width: 100%; height: auto; margin: 0.5rem 0; display: block;';
         img.alt = 'Inserted image';
         
         // Create a line break after image
@@ -383,13 +413,13 @@ class CustomRichEditor {
             range.collapse(false);
         } else {
             // Insert at end if no selection
-            this.contentArea.appendChild(img);
-            this.contentArea.appendChild(br);
+            editorInstance.contentArea.appendChild(img);
+            editorInstance.contentArea.appendChild(br);
         }
         
         // Sync content and trigger input event
-        this.syncContent();
-        this.contentArea.dispatchEvent(new Event('input', { bubbles: true }));
+        editorInstance.syncContent();
+        editorInstance.contentArea.dispatchEvent(new Event('input', { bubbles: true }));
         
         console.log('Image inserted successfully');
     }
@@ -416,6 +446,68 @@ class CustomRichEditor {
             } else {
                 this.contentArea.appendChild(pre);
             }
+            
+            this.syncContent();
+        }
+    }
+
+    toggleSourceMode() {
+        this.isSourceMode = !this.isSourceMode;
+        
+        if (this.isSourceMode) {
+            // Chuyển sang chế độ source (HTML)
+            const html = this.contentArea.innerHTML;
+            this.contentArea.style.display = 'none';
+            
+            // Tạo textarea để hiển thị HTML
+            this.sourceTextarea = document.createElement('textarea');
+            this.sourceTextarea.value = html;
+            this.sourceTextarea.style.cssText = `
+                width: 100%;
+                height: ${this.options.height}px;
+                padding: 1rem;
+                border: none;
+                outline: none;
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                font-size: 13px;
+                line-height: 1.5;
+                color: #374151;
+                background: #f9fafb;
+                resize: vertical;
+            `;
+            
+            // Thêm event listener để sync content khi thay đổi
+            this.sourceTextarea.addEventListener('input', () => {
+                this.syncContent();
+            });
+            
+            this.contentArea.parentNode.insertBefore(this.sourceTextarea, this.contentArea.nextSibling);
+            
+            // Disable các toolbar buttons khác ngoại trừ source
+            const toolbarButtons = this.toolbar.querySelectorAll('button');
+            toolbarButtons.forEach(btn => {
+                if (!btn.getAttribute('title').includes('View Source')) {
+                    btn.style.opacity = '0.5';
+                    btn.style.pointerEvents = 'none';
+                }
+            });
+            
+        } else {
+            // Chuyển về chế độ visual
+            if (this.sourceTextarea) {
+                this.contentArea.innerHTML = this.sourceTextarea.value;
+                this.sourceTextarea.remove();
+                this.sourceTextarea = null;
+            }
+            
+            this.contentArea.style.display = 'block';
+            
+            // Enable lại các toolbar buttons
+            const toolbarButtons = this.toolbar.querySelectorAll('button');
+            toolbarButtons.forEach(btn => {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            });
             
             this.syncContent();
         }
@@ -471,87 +563,18 @@ class CustomRichEditor {
     }
 
     setupImageInsertion() {
-        // Global function để chèn ảnh từ file manager
-        window.insertImageToCustomEditor = (url, editorId) => {
-            if (editorId === this.selector) {
-                this.insertImageToEditor(url);
-            }
-        };
-        
-        // Listen for the insert-image-from-modal event from file manager
-        window.addEventListener('insert-image-from-modal', (event) => {
-            const urls = event.detail.images || [];
-            const editorId = window.targetCustomEditorId;
-            
-            console.log('Custom editor received image event:', {
-                urls: urls,
-                editorId: editorId,
-                currentSelector: this.selector
-            });
-            
-            if (editorId === this.selector && urls.length > 0) {
-                urls.forEach(url => {
-                    this.insertImageToEditor(url);
-                });
-            }
-        });
-        
-        // Single event listener for image insertion to prevent duplicates
-        const handleImageEvent = (event) => {
-            const editorId = window.targetCustomEditorId;
-            
-            console.log('Custom editor received image event:', {
-                eventType: event.type,
-                editorId: editorId,
-                currentSelector: this.selector,
-                eventDetail: event.detail
-            });
-            
-            // Only process if this is the target editor
-            if (editorId !== this.selector) {
-                console.log('Not the target editor, skipping');
-                return;
-            }
-            
-            let images = [];
-            
-            // Handle different event types
-            if (event.type === 'select-image') {
-                const { target, images: eventImages } = event.detail;
-                if (target === 'wysiwyg' && eventImages) {
-                    images = eventImages;
-                }
-            } else if (event.type === 'insert-image-from-modal') {
-                const urls = event.detail.images || [];
-                images = urls.map(url => ({ url }));
-            }
-            
-            // Process images
-            if (images.length > 0) {
-                console.log(`Processing ${images.length} images for editor ${this.selector}`);
-                images.forEach((img, index) => {
-                    // Handle both full URL and relative path
-                    let url = img.url;
-                    if (url.includes('/uploads/')) {
-                        url = '/uploads/' + url.split('/uploads/').pop();
-                    } else if (!url.startsWith('http') && !url.startsWith('/')) {
-                        url = '/uploads/' + url;
-                    }
-                    console.log(`Processing image ${index + 1}:`, url);
-                    this.insertImageToEditor(url);
-                });
-            }
-        };
-        
-        // Add single event listeners
-        document.addEventListener('select-image', handleImageEvent);
-        window.addEventListener('select-image', handleImageEvent);
-        window.addEventListener('insert-image-from-modal', handleImageEvent);
+        // The global function is now handled in the view
     }
 
     syncContent() {
         // Sync content với textarea gốc
-        this.element.value = this.contentArea.innerHTML;
+        if (this.isSourceMode && this.sourceTextarea) {
+            // Nếu đang ở chế độ source, sync từ sourceTextarea
+            this.element.value = this.sourceTextarea.value;
+        } else {
+            // Nếu ở chế độ visual, sync từ contentArea
+            this.element.value = this.contentArea.innerHTML;
+        }
         
         // Trigger change event
         const event = new Event('change', { bubbles: true });
@@ -610,5 +633,26 @@ document.head.appendChild(style);
 
 // Global function để khởi tạo editor
 window.initCustomRichEditor = function(selector, options = {}) {
-    return new CustomRichEditor(selector, options);
+    const editor = new CustomRichEditor(selector, options);
+    
+    // Store editor instance globally for image insertion
+    if (!window.editors) {
+        window.editors = {};
+    }
+    window.editors[selector] = editor;
+    
+    return editor;
+};
+
+window.insertImageToCustomEditor = function(editorInstance, url) {
+    console.log('insertImageToCustomEditor called with:', editorInstance, url);
+    
+    if (editorInstance && typeof editorInstance.insertImageToEditor === 'function') {
+        editorInstance.insertImageToEditor(editorInstance, url);
+    } else if (editorInstance && editorInstance.selector) {
+        const editor = new CustomRichEditor(editorInstance.selector);
+        editor.insertImageToEditor(editor, url);
+    } else {
+        console.error('Could not insert image, invalid editor instance:', editorInstance);
+    }
 };

@@ -1,8 +1,28 @@
 <?= $this->extend('B/master') ?>
 <?= $this->section('content') ?>
 <?php helper('form'); ?>
-<div x-data="newsFormData()" 
-     @select-image.window="handleImageSelection($event.detail)">
+<div x-data="categoryEditFormData()" 
+     @select-image.window="
+        if ($event.detail.target === 'wysiwyg-vi') {
+            const images = $event.detail.images || [];
+            images.forEach(image => {
+                const imageUrl = image.url || image;
+                if (window.editors && window.editors['#editor']) {
+                    insertImageToCustomEditor(window.editors['#editor'], imageUrl);
+                }
+            });
+        } else if ($event.detail.target === 'wysiwyg-en') {
+            const images = $event.detail.images || [];
+            images.forEach(image => {
+                const imageUrl = image.url || image;
+                if (window.editors && window.editors['#editor1']) {
+                    insertImageToCustomEditor(window.editors['#editor1'], imageUrl);
+                }
+            });
+        } else {
+            handleImageSelection($event.detail);
+        }
+     ">
     <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
         Chỉnh sửa danh mục sản phẩm
     </h1>
@@ -24,8 +44,8 @@
                                value="<?= isset($category->name) ? esc($category->name) : '' ?>"
                                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" 
                                placeholder="Nhập tên danh mục..." 
-                               x-model="newsTitleVi" 
-                               @input="maybeGenerateSlug">
+                               x-model="categoryName" 
+                               @input="generateSlug">
                     </div>
                     
                     <div>
@@ -36,7 +56,7 @@
                                value="<?= isset($category->slug) ? esc($category->slug) : '' ?>"
                                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 py-3 px-4 text-base" 
                                placeholder="tu-dong-tao-slug" 
-                               x-model="newsSlug" 
+                               x-model="categorySlug" 
                                readonly>
                     </div>
 
@@ -112,10 +132,7 @@
                                 </div>
                                 
                                 <div class="toolbar-group">
-                                    <button type="button" 
-                                            class="toolbar-btn" 
-                                            @click="openFileManager('wysiwyg-vi')" 
-                                            title="Chèn ảnh">
+                                    <button type="button" class="toolbar-btn insert-image-btn" data-target="wysiwyg-vi" title="Chèn ảnh">
                                         <i class="fas fa-image"></i>
                                     </button>
                                     <button type="button" class="toolbar-btn insert-image-url-btn" title="Chèn ảnh từ URL">
@@ -179,10 +196,7 @@
                                 </div>
                                 
                                 <div class="toolbar-group">
-                                    <button type="button" 
-                                            class="toolbar-btn" 
-                                            @click="openFileManager('wysiwyg-en')" 
-                                            title="Insert Image">
+                                    <button type="button" class="toolbar-btn insert-image-btn" data-target="wysiwyg-en" title="Insert Image">
                                         <i class="fas fa-image"></i>
                                     </button>
                                     <button type="button" class="toolbar-btn insert-image-url-btn" title="Insert Image from URL">
@@ -333,41 +347,96 @@
 <link rel="stylesheet" href="<?php echo base_url('B/assets/css/custom-rich-editor.css') ?>">
 <script src="<?php echo base_url('B/assets/js/file_modal.js') ?>"></script>
 <script src="<?php echo base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
-<script src="<?php echo base_url('B/assets/js/handle.js') ?>"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Khởi tạo custom rich editor cho nội dung tiếng Việt
-    const editorVi = initCustomRichEditor('#editor', {
-        height: 400,
-        placeholder: 'Soạn thảo nội dung danh mục...'
-    });
-    
-    // Khởi tạo custom rich editor cho nội dung tiếng Anh
-    const editorEn = initCustomRichEditor('#editor1', {
-        height: 300,
-        placeholder: 'Soạn thảo nội dung danh mục...'
-    });
-
-    window.editors = {
-        '#editor': editorVi,
-        '#editor1': editorEn
-    };
-    
-    // Set initial values for Alpine.js from PHP data
-    document.addEventListener('alpine:init', () => {
-        // Set initial data after Alpine is ready
-        setTimeout(() => {
-            const component = Alpine.$data(document.querySelector('[x-data*="newsFormData"]'));
-            if (component) {
-                component.newsTitleVi = '<?= isset($category->name) ? addslashes($category->name) : '' ?>';
-                component.newsSlug = '<?= isset($category->slug) ? addslashes($category->slug) : '' ?>';
-                component.featuredImageUrl = '<?= isset($category->thumbnail) ? addslashes($category->thumbnail) : '' ?>';
-                component.galleryImageUrls = <?= isset($images) && !empty($images) ? json_encode($images) : '[]' ?>;
-                component.galleryImageIds = component.galleryImageUrls.map((url, index) => index + 1);
+document.addEventListener('alpine:init', () => {
+    Alpine.data('categoryEditFormData', () => ({
+        modalHtml: '',
+        categoryName: '<?= isset($category->name) ? addslashes($category->name) : '' ?>',
+        categorySlug: '<?= isset($category->slug) ? addslashes($category->slug) : '' ?>',
+        featuredImageUrl: '<?= isset($category->thumbnail) ? addslashes($category->thumbnail) : '' ?>',
+        galleryImageUrls: <?= isset($images) && !empty($images) ? json_encode($images) : '[]' ?>,
+        galleryImageIds: [],
+        
+        init() {
+            // Initialize gallery image IDs if we have URLs
+            if (this.galleryImageUrls.length > 0) {
+                this.galleryImageIds = this.galleryImageUrls.map((url, index) => index + 1);
             }
-        }, 100);
-    });
+            
+            // Listen for image selection events from modal
+            window.addEventListener('select-image.window', (event) => {
+                if (event.detail.target !== 'wysiwyg-vi' && event.detail.target !== 'wysiwyg-en') {
+                    this.handleImageSelection(event.detail);
+                }
+            });
+        },
+        
+        generateSlug() {
+            this.categorySlug = this.categoryName
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+                .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-') // Replace multiple hyphens with single
+                .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+        },
+        
+        openFileManager(type) {
+            window.selectionTarget = type;
+            this.modalHtml = `
+                <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" id="file-modal">
+                    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Chọn hình ảnh</h3>
+                            <div id="file-manager-content">
+                                <div class="text-center py-4">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                                    <p class="mt-2 text-gray-600">Đang tải...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Load the file manager
+            setTimeout(() => {
+                const script = document.createElement('script');
+                script.src = '/B/assets/js/file_modal.js';
+                script.onload = () => {
+                    if (typeof initFileManager === 'function') {
+                        initFileManager(type);
+                    }
+                };
+                document.head.appendChild(script);
+            }, 100);
+        },
+        
+        closeModal() {
+            this.modalHtml = '';
+        },
+        
+        handleImageSelection(detail) {
+            if (window.selectionTarget === 'featured') {
+                this.featuredImageUrl = detail.urls[0];
+            } else if (window.selectionTarget === 'gallery') {
+                this.galleryImageUrls = detail.urls;
+                this.galleryImageIds = detail.ids;
+            }
+            this.closeModal();
+        },
+        
+        removeImage(type, index) {
+            if (type === 'featured') {
+                this.featuredImageUrl = '';
+            } else if (type === 'gallery') {
+                this.galleryImageUrls.splice(index, 1);
+                this.galleryImageIds.splice(index, 1);
+            }
+        }
+    }));
 });
 </script>
 <?= $this->endsection() ?>

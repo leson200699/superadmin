@@ -1,7 +1,7 @@
 <?= $this->extend('B/master') ?>
 <?= $this->section('content') ?>
 <?php helper('form'); ?>
-<div x-data="carFormData()" 
+<div x-data="newsFormData()" 
      @select-image.window="
         if ($event.detail.target === 'wysiwyg-vi') {
             // Chèn ảnh vào editor
@@ -89,93 +89,53 @@
                     <div class="bg-gray-50 p-4 rounded-lg">
                         <h2 class="text-lg font-semibold text-gray-700 mb-4">Màu xe</h2>
                         <div class="space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
+                            <div class="flex space-x-4">
+                                <div class="flex-1">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Mã màu (Hex)</label>
-                                    <div class="flex space-x-2">
-                                        <input type="text" x-model="newColor" @input="validateHexColor($event)" class="flex-1 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Ví dụ: #FF0000">
-                                        <input type="color" x-model="newColor" class="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer">
-                                    </div>
-                                    <div x-show="newColor && !isValidHex(newColor)" class="mt-1 text-xs text-red-500">
-                                        Mã màu không hợp lệ
-                                    </div>
-                                    <!-- Preview màu -->
-                                    <div x-show="newColor && isValidHex(newColor)" class="mt-2 flex items-center space-x-2">
-                                        <div class="w-6 h-6 rounded border border-gray-300" :style="'background-color: ' + newColor"></div>
-                                        <span class="text-xs text-gray-600" x-text="newColor"></span>
-                                    </div>
+                                    <input type="text" x-model="newColor" @input="$event.target.value = $event.target.value.toUpperCase()" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Ví dụ: #FF0000">
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Hình ảnh màu</label>
-                                    <button type="button" @click="openFileManager('color_' + colors.length); window.colorIndex = colors.length" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 w-full h-12 flex items-center justify-center">
-                                        <i class="fas fa-image mr-2"></i>
-                                        <span x-text="newColorImage ? 'Đổi ảnh' : 'Chọn ảnh'"></span>
+                                    <button type="button" @click="openFileManager('color_' + colors.length); window.colorIndex = colors.length" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 w-full">
+                                        Chọn ảnh
                                     </button>
                                     <div x-show="newColorImage" class="mt-2">
                                         <img :src="newColorImage" class="w-16 h-16 object-cover rounded-md border border-gray-200">
                                     </div>
                                 </div>
-                                <div class="flex items-end">
-                                    <button type="button" @click="addColor()" class="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full transition-colors" :disabled="!canAddColor()">
-                                        <i class="fas fa-plus mr-2"></i>
+                                <div>
+                                    <button type="button" @click="addColor()" class="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700" :disabled="!newColor || !newColorImage">
                                         Thêm màu
                                     </button>
                                 </div>
                             </div>
-                            
                             <!-- Bảng màu cơ bản -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Chọn từ bảng màu cơ bản</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Chọn màu cơ bản</label>
                                 <div class="grid grid-cols-8 gap-2">
                                     <template x-for="color in basicColors" :key="color.hex">
-                                        <button type="button" @click="selectBasicColor(color.hex)" 
-                                                class="w-10 h-10 rounded-full border-2 hover:scale-110 transition-transform relative group"
-                                                :class="newColor === color.hex ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'" 
-                                                :style="'background-color: ' + color.hex" 
-                                                :title="color.name">
-                                            <span x-show="newColor === color.hex" class="absolute inset-0 flex items-center justify-center text-white text-xs">
-                                                <i class="fas fa-check"></i>
-                                            </span>
-                                        </button>
+                                        <button type="button" @click="newColor = color.hex" class="w-8 h-8 rounded-full border border-gray-300" :style="'background-color: ' + color.hex" :title="color.name"></button>
                                     </template>
                                 </div>
                             </div>
-                            
-                            <!-- Danh sách màu đã thêm -->
-                            <div x-show="colors.length === 0" class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
-                                <i class="fas fa-palette text-3xl mb-2"></i>
-                                <p>Chưa có màu xe nào được thêm.</p>
-                                <p class="text-xs">Chọn mã màu và hình ảnh để thêm màu mới.</p>
+                            <div x-show="colors.length === 0" class="text-sm text-gray-500">
+                                Chưa có màu xe nào được thêm.
                             </div>
-                            
-                            <div x-show="colors.length > 0">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h3 class="text-sm font-medium text-gray-700">Màu xe đã thêm (<span x-text="colors.length"></span>)</h3>
-                                    <button type="button" @click="clearAllColors()" class="text-xs text-red-600 hover:text-red-800">
-                                        <i class="fas fa-trash mr-1"></i>Xóa tất cả
-                                    </button>
-                                </div>
-                                <div class="grid grid-cols-1 gap-3">
-                                    <template x-for="(color, index) in colors" :key="index">
-                                        <div class="flex items-center space-x-4 bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                                            <div class="flex-shrink-0 w-16 h-16 border border-gray-200 rounded-lg overflow-hidden">
-                                                <img :src="color.image" class="w-full h-full object-cover" :alt="'Màu ' + color.hex">
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="flex items-center space-x-2 mb-1">
-                                                    <div class="w-4 h-4 rounded border border-gray-300" :style="'background-color: ' + color.hex"></div>
-                                                    <span class="text-sm font-medium text-gray-900" x-text="color.hex"></span>
-                                                </div>
-                                                <p class="text-xs text-gray-500">Màu xe #<span x-text="index + 1"></span></p>
-                                            </div>
-                                            <button type="button" @click="removeColor(index)" class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-colors">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                            <div x-show="colors.length > 0" class="grid grid-cols-1 gap-4">
+                                <template x-for="(color, index) in colors" :key="index">
+                                    <div class="flex items-center space-x-4 bg-white p-3 rounded-lg shadow-sm">
+                                        <div class="flex-shrink-0 w-16 h-16 border border-gray-200 rounded-lg overflow-hidden">
+                                            <img :src="color.image" class="w-full h-full object-cover">
                                         </div>
-                                    </template>
-                                </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-700">Mã màu: <span x-text="color.hex"></span></p>
+                                        </div>
+                                        <button type="button" @click="colors.splice(index, 1)" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </template>
                             </div>
-                            
                             <input type="hidden" name="colors" :value="JSON.stringify(colors)">
                         </div>
                     </div>
@@ -277,7 +237,7 @@
 
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('carFormData', () => ({
+    Alpine.data('newsFormData', () => ({
         newsTitleVi: '',
         newsSlug: '',
         featuredImageUrl: '',
@@ -287,46 +247,24 @@ document.addEventListener('alpine:init', () => {
         newColorImage: '',
         colors: [], // Đảm bảo khởi tạo mảng colors ở đây
         basicColors: [
-            { hex: '#FF0000', name: 'Đỏ' },
-            { hex: '#00FF00', name: 'Xanh lá' },
-            { hex: '#0000FF', name: 'Xanh dương' },
-            { hex: '#FFFF00', name: 'Vàng' },
-            { hex: '#FF00FF', name: 'Tím hồng' },
-            { hex: '#00FFFF', name: 'Xanh cyan' },
-            { hex: '#FFA500', name: 'Cam' },
-            { hex: '#800080', name: 'Tím' },
-            { hex: '#000000', name: 'Đen' },
-            { hex: '#FFFFFF', name: 'Trắng' },
-            { hex: '#808080', name: 'Xám' },
-            { hex: '#A52A2A', name: 'Nâu' },
-            { hex: '#FFC0CB', name: 'Hồng' },
-            { hex: '#90EE90', name: 'Xanh lá nhạt' },
-            { hex: '#87CEEB', name: 'Xanh da trời' },
-            { hex: '#FFD700', name: 'Vàng kim' }
+            { name: 'Đỏ', hex: '#FF0000' },
+            { name: 'Xanh dương', hex: '#0000FF' },
+            { name: 'Đen', hex: '#000000' },
+            { name: 'Trắng', hex: '#FFFFFF' },
+            { name: 'Xám', hex: '#808080' },
+            { name: 'Vàng', hex: '#FFFF00' },
+            { name: 'Xanh lá', hex: '#008000' },
+            { name: 'Bạc', hex: '#C0C0C0' }
         ],
-        
-        init() {
-            // Load existing colors if editing
-            <?php if (isset($car) && isset($car['colors']) && !empty($car['colors'])): ?>
-                this.colors = <?= json_encode($car['colors']) ?>;
-            <?php endif; ?>
-        },
-        
         generateSlug() {
             this.newsSlug = this.newsTitleVi.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         },
-        
         openFileManager(type) {
-            // Gọi function openFileManager từ instance file manager
-            const fileManagerEl = document.querySelector('[x-data*="newsFormData"]');
-            if (fileManagerEl && fileManagerEl._x_dataStack) {
-                const fileManagerData = fileManagerEl._x_dataStack[0];
-                if (fileManagerData && fileManagerData.openFileManager) {
-                    fileManagerData.openFileManager(type);
-                }
-            }
+            window.selectionTarget = type;
+            window.selectionMode = type === 'wysiwyg' ? 'multiple' : 'single';
+            window.selectedModalImages = [];
+            window.showFileManager = true;
         },
-        
         handleImageSelection(detail) {
             if (window.selectionTarget === 'featured') {
                 this.featuredImageUrl = detail.urls[0];
@@ -337,74 +275,13 @@ document.addEventListener('alpine:init', () => {
                 this.newColorImage = detail.urls[0];
             }
         },
-        
-        validateHexColor(event) {
-            let value = event.target.value;
-            
-            // Auto add # if not present
-            if (value && !value.startsWith('#')) {
-                value = '#' + value;
-                event.target.value = value;
-                this.newColor = value;
-            }
-            
-            // Convert to uppercase
-            this.newColor = value.toUpperCase();
-        },
-        
-        isValidHex(color) {
-            if (!color) return false;
-            const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-            return hexRegex.test(color);
-        },
-        
-        selectBasicColor(hex) {
-            this.newColor = hex;
-        },
-        
-        canAddColor() {
-            return this.newColor && this.isValidHex(this.newColor) && this.newColorImage;
-        },
-        
         addColor() {
-            if (!this.canAddColor()) {
-                alert('Vui lòng chọn màu và hình ảnh!');
-                return;
-            }
-            
-            // Check if color already exists
-            const colorExists = this.colors.some(color => color.hex === this.newColor);
-            if (colorExists) {
-                alert('Màu này đã được thêm!');
-                return;
-            }
-            
-            this.colors.push({
-                hex: this.newColor,
-                image: this.newColorImage
-            });
-            
-            // Reset form
-            this.newColor = '';
-            this.newColorImage = '';
-        },
-        
-        removeColor(index) {
-            if (confirm('Bạn có chắc muốn xóa màu này?')) {
-                this.colors.splice(index, 1);
-            }
-        },
-        
-        clearAllColors() {
-            if (this.colors.length === 0) return;
-            
-            if (confirm('Bạn có chắc muốn xóa tất cả màu xe?')) {
-                this.colors = [];
+            if (this.newColor && this.newColorImage) {
+                this.colors.push({ hex: this.newColor, image: this.newColorImage });
                 this.newColor = '';
                 this.newColorImage = '';
             }
         },
-        
         removeImage(type, index) {
             if (type === 'featured') {
                 this.featuredImageUrl = '';
@@ -416,11 +293,8 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
-
-<!-- File Manager Modal -->
-<div x-data="newsFormData()" x-cloak>
-    <div x-html="modalHtml"></div>
-</div>
+<!-- Nhúng modal file manager -->
+<div x-html="modalHtml" x-cloak></div>
 
 <?= $this->endSection() ?>
 <?= $this->section('script') ?>

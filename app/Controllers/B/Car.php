@@ -152,28 +152,99 @@ class Car extends Controller
     public function edit($id)
     {
         $car = $this->carModel->find($id);
+        if (!$car) {
+            return redirect()->to('/admin/car')->with('error', 'Xe không tồn tại!');
+        }
+        
         $categories = (new CarCategory_Model())->findAll();
         $colors = $this->carModel->get_car_colors($id);
-        // Nếu có gallery hoặc các trường khác, lấy thêm ở đây
-        // $gallery = ...
+        
+        // Chuyển đổi format colors để phù hợp với Alpine.js
+        $formattedColors = [];
+        if (!empty($colors)) {
+            foreach ($colors as $color) {
+                $formattedColors[] = [
+                    'hex' => $color['hex_code'] ?? $color['hex'],
+                    'image' => $color['image_url'] ?? $color['image']
+                ];
+            }
+        }
+        
+        // Thêm colors vào car data
+        $car['colors'] = $formattedColors;
+        
         $view_data = [
             'car' => $car,
             'categories' => $categories,
-            'colors' => $colors,
+            'colors' => $formattedColors, // For backward compatibility
             'title' => 'Chỉnh sửa xe',
-            // 'gallery' => $gallery,
         ];
+        
         echo view('B/pages/car/car_create', $view_data);
     }
 
     public function update($id)
     {
-        $model = new Car_Model();
-        $data = $this->request->getPost();
-        $data['slug'] = url_title($data['title'], '-', true);
+        $validation = \Config\Services::validation();
+        
+        // Quy tắc validate
+        $rules = [
+            'name' => 'required|min_length[3]|max_length[255]',
+            'price' => 'required|numeric|greater_than[0]',
+            'content' => 'required',
+            'category_id' => 'required|integer',
+            'thumbnail' => 'permit_empty|valid_url',
+            'video_url' => 'permit_empty|valid_url',
+            'colors' => 'permit_empty',
+        ];
 
-        $model->update($id, $data);
-        return redirect()->to('/admin/car');
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Lấy dữ liệu từ form
+        $data = [
+            'name' => $this->request->getPost('name'),
+            'slug' => $this->generateSlug($this->request->getPost('name')),
+            'price' => $this->request->getPost('price'),
+            'brand' => $this->request->getPost('brand'),
+            'model' => $this->request->getPost('model'),
+            'year' => $this->request->getPost('year'),
+            'engine' => $this->request->getPost('engine'),
+            'transmission' => $this->request->getPost('transmission'),
+            'fuel_type' => $this->request->getPost('fuel_type'),
+            'mileage' => $this->request->getPost('mileage'),
+            'caption' => $this->request->getPost('caption'),
+            'content' => $this->request->getPost('content'),
+            'video_url' => $this->request->getPost('video_url'),
+            'thumbnail' => $this->request->getPost('thumbnail'),
+            'category_id' => $this->request->getPost('category_id'),
+            'meta_title' => $this->request->getPost('meta_title'),
+            'meta_keyword' => $this->request->getPost('meta_keyword'),
+            'meta_description' => $this->request->getPost('meta_description'),
+            'status' => $this->request->getPost('status') ?? 1,
+        ];
+
+        // Cập nhật xe trong database
+        $updated = $this->carModel->update($id, $data);
+
+        if ($updated) {
+            // Xử lý màu xe
+            $colors = $this->request->getPost('colors');
+            if (!empty($colors)) {
+                $colors = json_decode($colors, true);
+                if (is_array($colors)) {
+                    $this->carModel->updateCarColors($id, $colors);
+                }
+            } else {
+                // Xóa tất cả màu nếu không có màu nào được gửi
+                $this->carModel->deleteCarColors($id);
+            }
+
+            return redirect()->to('/admin/car')->with('message', 'Cập nhật xe thành công!');
+        }
+
+        return redirect()->back()->with('error', 'Không thể cập nhật xe. Vui lòng thử lại.');
     }
 
     public function delete($id)

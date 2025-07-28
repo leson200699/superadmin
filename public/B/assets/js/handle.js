@@ -127,9 +127,10 @@ tinymce.init({
 });
 
 
-function openFileManager(imageType) {
-    // Lưu imageType vào window.top để đảm bảo iframe có thể truy cập được đúng biến
-    window.top.imageType = imageType; // 'news-image' hoặc 'sub-image'
+function openFileManager(imageType, editorId = null) {
+    // Lưu imageType và editorId vào window.top
+    window.top.imageType = imageType;
+    window.top.targetEditorId = editorId; // Lưu ID của editor
     document.getElementById('fileManagerModal').style.display = 'block';
 }
 
@@ -170,11 +171,12 @@ function closeFileManagerModal() {
 
 window.addEventListener("insert-image-from-modal", function (event) {
     const urls = event.detail.images || [];
-    
+    const targetEditorId = window.top.targetEditorId; // Lấy ID của editor từ window.top
+
     console.log('Handle.js received image event:', {
         urls: urls,
         targetTinyEditorId: window.targetTinyEditorId,
-        targetCustomEditorId: window.targetCustomEditorId
+        targetCustomEditorId: targetEditorId
     });
     
     // Handle TinyMCE editors
@@ -182,16 +184,16 @@ window.addEventListener("insert-image-from-modal", function (event) {
         const editor = tinymce.get(window.targetTinyEditorId);
         if (editor) {
             urls.forEach(url => {
-                editor.insertContent(`<img src="${url}" style="max-width:300px;height:auto;" /><br/>`);
+                editor.insertContent(`<img src="${url}" style="max-width:100%;height:auto;" /><br/>`);
             });
         }
     }
     
     // Handle Custom Rich Editors
-    if (window.targetCustomEditorId) {
+    if (targetEditorId && urls.length > 0) {
         urls.forEach(url => {
             if (window.insertImageToCustomEditor) {
-                window.insertImageToCustomEditor(url, window.targetCustomEditorId);
+                window.insertImageToCustomEditor(url, targetEditorId);
             }
         });
     }

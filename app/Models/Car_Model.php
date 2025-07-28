@@ -132,4 +132,81 @@ class Car_Model extends Model
             ]
         ];
     }
+
+    /**
+     * Insert car and return the ID
+     */
+    public function insertCar($data)
+    {
+        $this->insert($data);
+        return $this->insertID();
+    }
+
+    /**
+     * Insert car color
+     */
+    public function insertColor($carId, $colorData)
+    {
+        $data = [
+            'car_id' => $carId,
+            'hex_code' => $colorData['hex_code'],
+            'image_url' => $colorData['image_url']
+        ];
+        
+        return $this->db->table('car_colors')->insert($data);
+    }
+
+    /**
+     * Delete car colors by car ID
+     */
+    public function deleteCarColors($carId)
+    {
+        return $this->db->table('car_colors')->where('car_id', $carId)->delete();
+    }
+
+    /**
+     * Update car colors (delete old and insert new)
+     */
+    public function updateCarColors($carId, $colors)
+    {
+        // Delete existing colors
+        $this->deleteCarColors($carId);
+        
+        // Insert new colors
+        if (!empty($colors) && is_array($colors)) {
+            foreach ($colors as $color) {
+                if (!empty($color['hex']) && !empty($color['image'])) {
+                    $this->insertColor($carId, [
+                        'hex_code' => $color['hex'],
+                        'image_url' => $color['image'],
+                    ]);
+                }
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * Insert gallery image
+     */
+    public function insertGalleryImage($carId, $imageUrl)
+    {
+        $data = [
+            'car_id' => $carId,
+            'image_url' => $imageUrl
+        ];
+        
+        return $this->db->table('car_gallery')->insert($data);
+    }
+
+    /**
+     * Get image URL by ID (placeholder method)
+     */
+    public function getImageUrlById($imageId)
+    {
+        // This should return the actual image URL from your file management system
+        // For now, return a placeholder
+        return '/uploads/image_' . $imageId . '.jpg';
+    }
 }

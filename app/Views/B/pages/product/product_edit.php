@@ -33,6 +33,9 @@
 
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Nội dung</label>
+                        <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5" @click="openFileManager('wysiwyg-vi')">
+                            <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
+                        </button>
                         <textarea id="editor" name="content" rows="8"
                                 class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Nhập nội dung chi tiết..."><?= $edit_product->content ?></textarea>
                             </div>
@@ -204,170 +207,171 @@
 <?= $this->include('B/components/entity_sections_link', [
     'entityType' => 'product',
     'entityId' => $product['id'],
-    'entityName' => $product['name']
+    'entityName' => isset($product['name']) ? $product['name'] : 'Sản phẩm'
 ]) ?>
 <?php endif; ?>
 </div>
 
 <?= $this->endSection() ?>
 <?= $this->section('script') ?>
-<script src="<?php echo base_url('tinymce/js/tinymce/tinymce.min.js') ?>"></script>
+<script src="<?php echo base_url('B/assets/js/file_modal.js') ?>"></script>
+<script src="<?php echo base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
 <script>
-    tinymce.init({
-        selector: '#editor',
-        height: 500,
-        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
-        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize custom editor
+    initCustomRichEditor('#editor', {
+        height: 300,
+        placeholder: 'Nhập nội dung sản phẩm chi tiết...'
     });
-
+    
+    // Rest of the existing JavaScript code...
     // Sử dụng JavaScript thuần thay vì Alpine.js
-    document.addEventListener('DOMContentLoaded', function() {
-        // Xử lý nút thêm thành phần
-        document.querySelector('.btn-ingredient').addEventListener('click', function() {
-            const container = document.getElementById('ingredients-container');
-            const div = document.createElement('div');
-            div.className = 'flex space-x-2';
-            div.innerHTML = `
-                <input type="text" name="ingredient[]" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base" placeholder="Nhập thành phần...">
-                <button type="button" class="remove-ingredient bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            container.appendChild(div);
-            
-            // Thêm sự kiện cho nút xóa mới thêm vào
-            div.querySelector('.remove-ingredient').addEventListener('click', function() {
-                div.remove();
-            });
-        });
-
-        // Xử lý nút thêm hướng dẫn
-        document.querySelector('.btn-user-guide').addEventListener('click', function() {
-            const container = document.getElementById('user-guide-container');
-            const div = document.createElement('div');
-            div.className = 'flex space-x-2';
-            div.innerHTML = `
-                <input type="text" name="user_guide[]" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base" placeholder="Nhập hướng dẫn...">
-                <button type="button" class="remove-guide bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            container.appendChild(div);
-            
-            // Thêm sự kiện cho nút xóa mới thêm vào
-            div.querySelector('.remove-guide').addEventListener('click', function() {
-                div.remove();
-            });
-        });
-
-        // Thêm sự kiện cho các nút xóa đã có sẵn
-        document.querySelectorAll('.remove-ingredient').forEach(button => {
-            button.addEventListener('click', function() {
-                this.closest('.flex').remove();
-            });
-        });
-
-        document.querySelectorAll('.remove-guide').forEach(button => {
-            button.addEventListener('click', function() {
-                this.closest('.flex').remove();
-            });
-        });
-
-        // Xử lý ảnh đại diện và ảnh hướng dẫn
-        document.getElementById('featured-image-button').addEventListener('click', function() {
-            openFileManager('featured');
-        });
+    // Xử lý nút thêm thành phần
+    document.querySelector('.btn-ingredient').addEventListener('click', function() {
+        const container = document.getElementById('ingredients-container');
+        const div = document.createElement('div');
+        div.className = 'flex space-x-2';
+        div.innerHTML = `
+            <input type="text" name="ingredient[]" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base" placeholder="Nhập thành phần...">
+            <button type="button" class="remove-ingredient bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(div);
         
-        document.getElementById('guide-image-button').addEventListener('click', function() {
-            openFileManager('guide');
+        // Thêm sự kiện cho nút xóa mới thêm vào
+        div.querySelector('.remove-ingredient').addEventListener('click', function() {
+            div.remove();
         });
-        
-        document.getElementById('gallery-button').addEventListener('click', function() {
-            openFileManager('gallery');
-        });
-        
-        // Nút xóa ảnh đại diện
-        document.getElementById('remove-featured-image').addEventListener('click', function() {
-            document.getElementById('featured-image-input').value = '';
-            document.getElementById('featured-image-preview').src = '';
-        });
-        
-        // Nút xóa ảnh hướng dẫn
-        document.getElementById('remove-guide-image').addEventListener('click', function() {
-            document.getElementById('guide-image-input').value = '';
-            document.getElementById('guide-image-preview').src = '';
-        });
-        
-        // Xử lý thư viện ảnh
-        let galleryImages = [];
-        
-        function updateGalleryDisplay() {
-            const galleryContainer = document.getElementById('gallery-container');
-            const galleryEmptyMessage = document.getElementById('gallery-empty-message');
-            
-            if (galleryImages.length === 0) {
-                galleryContainer.style.display = 'none';
-                galleryEmptyMessage.style.display = 'block';
-            } else {
-                galleryContainer.style.display = 'grid';
-                galleryEmptyMessage.style.display = 'none';
-                
-                galleryContainer.innerHTML = '';
-                galleryImages.forEach((url, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'relative group aspect-square';
-                    div.innerHTML = `
-                        <img src="${url}" class="w-full h-full object-cover rounded-md border border-gray-200">
-                        <button type="button" class="remove-gallery-image absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" data-index="${index}">
-                            <i class="fas fa-times text-xs"></i>
-                        </button>
-                    `;
-                    galleryContainer.appendChild(div);
-                    
-                    div.querySelector('.remove-gallery-image').addEventListener('click', function() {
-                        const index = parseInt(this.getAttribute('data-index'));
-                        galleryImages.splice(index, 1);
-                        document.getElementById('gallery-images-input').value = galleryImages.join(',');
-                        updateGalleryDisplay();
-                    });
-                });
-            }
-        }
-        
-        // Khởi tạo hiển thị thư viện ảnh
-        updateGalleryDisplay();
-
-        // Xử lý trình quản lý file
-        function openFileManager(type) {
-            let fieldId = '';
-            if (type === 'featured') {
-                fieldId = 'featured-image-input';
-            } else if (type === 'guide') {
-                fieldId = 'guide-image-input';
-            } else {
-                fieldId = 'gallery-images';
-            }
-            window.open('/filemanager/dialog.php?type=1&field_id=' + fieldId, 'filemanager', 'width=900,height=600');
-        }
     });
 
-    // Hàm callback khi chọn file từ file manager
-    function responsive_filemanager_callback(field_id) {
-        const input = document.getElementById(field_id);
-        if (!input) return;
+    // Xử lý nút thêm hướng dẫn
+    document.querySelector('.btn-user-guide').addEventListener('click', function() {
+        const container = document.getElementById('user-guide-container');
+        const div = document.createElement('div');
+        div.className = 'flex space-x-2';
+        div.innerHTML = `
+            <input type="text" name="user_guide[]" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base" placeholder="Nhập hướng dẫn...">
+            <button type="button" class="remove-guide bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(div);
         
-        const url = input.value;
+        // Thêm sự kiện cho nút xóa mới thêm vào
+        div.querySelector('.remove-guide').addEventListener('click', function() {
+            div.remove();
+        });
+    });
+
+    // Thêm sự kiện cho các nút xóa đã có sẵn
+    document.querySelectorAll('.remove-ingredient').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.flex').remove();
+        });
+    });
+
+    document.querySelectorAll('.remove-guide').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.flex').remove();
+        });
+    });
+
+    // Xử lý ảnh đại diện và ảnh hướng dẫn
+    document.getElementById('featured-image-button').addEventListener('click', function() {
+        openFileManager('featured');
+    });
+    
+    document.getElementById('guide-image-button').addEventListener('click', function() {
+        openFileManager('guide');
+    });
+    
+    document.getElementById('gallery-button').addEventListener('click', function() {
+        openFileManager('gallery');
+    });
+    
+    // Nút xóa ảnh đại diện
+    document.getElementById('remove-featured-image').addEventListener('click', function() {
+        document.getElementById('featured-image-input').value = '';
+        document.getElementById('featured-image-preview').src = '';
+    });
+    
+    // Nút xóa ảnh hướng dẫn
+    document.getElementById('remove-guide-image').addEventListener('click', function() {
+        document.getElementById('guide-image-input').value = '';
+        document.getElementById('guide-image-preview').src = '';
+    });
+    
+    // Xử lý thư viện ảnh
+    let galleryImages = [];
+    
+    function updateGalleryDisplay() {
+        const galleryContainer = document.getElementById('gallery-container');
+        const galleryEmptyMessage = document.getElementById('gallery-empty-message');
         
-        if (field_id === 'featured-image-input') {
-            document.getElementById('featured-image-preview').src = url;
-        } else if (field_id === 'guide-image-input') {
-            document.getElementById('guide-image-preview').src = url;
-        } else if (field_id === 'gallery-images') {
-            const galleryImages = document.querySelector('#gallery-images-input').value.split(',').filter(Boolean);
-            galleryImages.push(url);
-            document.querySelector('#gallery-images-input').value = galleryImages.join(',');
-            updateGalleryDisplay();
+        if (galleryImages.length === 0) {
+            galleryContainer.style.display = 'none';
+            galleryEmptyMessage.style.display = 'block';
+        } else {
+            galleryContainer.style.display = 'grid';
+            galleryEmptyMessage.style.display = 'none';
+            
+            galleryContainer.innerHTML = '';
+            galleryImages.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = 'relative group aspect-square';
+                div.innerHTML = `
+                    <img src="${url}" class="w-full h-full object-cover rounded-md border border-gray-200">
+                    <button type="button" class="remove-gallery-image absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" data-index="${index}">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                `;
+                galleryContainer.appendChild(div);
+                
+                div.querySelector('.remove-gallery-image').addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    galleryImages.splice(index, 1);
+                    document.getElementById('gallery-images-input').value = galleryImages.join(',');
+                    updateGalleryDisplay();
+                });
+            });
         }
     }
+    
+    // Khởi tạo hiển thị thư viện ảnh
+    updateGalleryDisplay();
+
+    // Xử lý trình quản lý file
+    function openFileManager(type) {
+        let fieldId = '';
+        if (type === 'featured') {
+            fieldId = 'featured-image-input';
+        } else if (type === 'guide') {
+            fieldId = 'guide-image-input';
+        } else {
+            fieldId = 'gallery-images';
+        }
+        window.open('/filemanager/dialog.php?type=1&field_id=' + fieldId, 'filemanager', 'width=900,height=600');
+    }
+});
+
+// Hàm callback khi chọn file từ file manager
+function responsive_filemanager_callback(field_id) {
+    const input = document.getElementById(field_id);
+    if (!input) return;
+    
+    const url = input.value;
+    
+    if (field_id === 'featured-image-input') {
+        document.getElementById('featured-image-preview').src = url;
+    } else if (field_id === 'guide-image-input') {
+        document.getElementById('guide-image-preview').src = url;
+    } else if (field_id === 'gallery-images') {
+        const galleryImages = document.querySelector('#gallery-images-input').value.split(',').filter(Boolean);
+        galleryImages.push(url);
+        document.querySelector('#gallery-images-input').value = galleryImages.join(',');
+        updateGalleryDisplay();
+    }
+}
 </script>
 <?= $this->endSection() ?>

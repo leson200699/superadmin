@@ -8,7 +8,38 @@
     newsTitleVi = `<?= esc($edit_news->name) ?>`;
     newsSlug = `<?= esc($edit_news->alias) ?>`;
     featuredImageUrl = `<?= esc($edit_news->thumbnail) ?>`;
-    galleryImageUrls = galleryImageIds.map(id => getImageUrlById(id));" @select-image.window="handleImageSelection($event.detail)">
+    galleryImageUrls = galleryImageIds.map(id => getImageUrlById(id));" 
+     @select-image.window="
+        if ($event.detail.target === 'wysiwyg-vi') {
+            // Chèn ảnh vào editor tiếng Việt
+            const images = $event.detail.images || [];
+            
+            images.forEach(image => {
+                const imageUrl = image.url || image;
+                
+                // Chỉ chèn vào editor tiếng Việt
+                if (window.editors && window.editors['#editor']) {
+                    insertImageToCustomEditor(window.editors['#editor'], imageUrl);
+                }
+            });
+            
+        } else if ($event.detail.target === 'wysiwyg-en') {
+            // Chèn ảnh vào editor tiếng Anh
+            const images = $event.detail.images || [];
+            
+            images.forEach(image => {
+                const imageUrl = image.url || image;
+                
+                // Chỉ chèn vào editor tiếng Anh
+                if (window.editors && window.editors['#editor1']) {
+                    insertImageToCustomEditor(window.editors['#editor1'], imageUrl);
+                }
+            });
+            
+        } else {
+            handleImageSelection($event.detail);
+        }
+     ">
     <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-6"><?= $title ?></h1>
     <?= form_open(route_to('admin-news-edit-post'), [csrf_token()]) ?>
     <?= csrf_field() ?>
@@ -36,8 +67,32 @@
                         <textarea name="caption" rows="3" class="w-full ..."><?= esc($edit_news->caption) ?></textarea>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium">Nội dung</label>
-                        <textarea id="editor" name="content" rows="35" class="w-full ..."><?= esc($edit_news->content) ?></textarea>
+                        <label class="block text-sm font-medium">Nội dung <span class="text-red-500">*</span></label>
+                        <button type="button"
+                          class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
+                          @click="openFileManager('wysiwyg-vi')">
+                          <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
+                        </button>
+                        <textarea id="editor" name="content" rows="35" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung bài viết..." style="display: none;"><?= esc($edit_news->content) ?></textarea>
+                        <div id="custom-editor-container"></div>
+                    </div>
+                    <div>
+                        <label for="name_en" class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết [en] <span class="text-red-500">*</span></label>
+                        <input type="text" id="name_en" name="name_en" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập tiêu đề..." value="<?= esc($edit_news->name_en ?? '') ?>">
+                    </div>
+                    <div>
+                        <label for="caption_en" class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt / Trích dẫn [en]</label>
+                        <textarea id="caption_en" name="caption_en" rows="3" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Nhập một đoạn mô tả ngắn..."><?= esc($edit_news->caption_en ?? '') ?></textarea>
+                    </div>
+                    <div>
+                        <label for="content_en" class="block text-sm font-medium text-gray-700 mb-1">Nội dung [en] <span class="text-red-500">*</span></label>
+                        <button type="button"
+                          class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
+                          @click="openFileManager('wysiwyg-en')">
+                          <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
+                        </button>
+                        <textarea id="editor1" name="content_en" rows="15" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung bài viết..." style="display: none;"><?= esc($edit_news->content_en ?? '') ?></textarea>
+                        <div id="custom-editor-container-en"></div>
                     </div>
                 </div>
             </div>
@@ -75,7 +130,18 @@
 
         <div class="lg:col-span-1 space-y-6">
             <div class="bg-white p-5 rounded-lg shadow">
-                <label class="block text-sm font-medium">Ảnh đại diện</label>
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Điểm SEO</h2>
+                <div class="space-y-3">
+                    <p class="block text-sm font-medium text-gray-700"><i class="mr-2 w-5 text-center fas fa-times-circle text-red-500"></i> Tiêu đề bài viết hợp lệ</p>
+                    <p class="block text-sm font-medium text-gray-700"><i class="mr-2 w-5 text-center fas fa-times-circle text-red-500"></i> Slug thân thiện</p>
+                    <p class="block text-sm font-medium text-gray-700"><i class="mr-2 w-5 text-center fas fa-times-circle text-red-500"></i> Nội dung tối thiểu 300 ký tự</p>
+                    <p class="block text-sm font-medium text-gray-700"><i class="mr-2 w-5 text-center fas fa-times-circle text-red-500"></i> Có đoạn mô tả ngắn</p>
+                    <p class="block text-sm font-medium text-gray-700 mb-1"><i class="mr-2 w-5 text-center fas fa-times-circle text-red-500"></i> Có ảnh đại diện</p>
+                    <p class="block text-sm font-medium text-gray-700"><i class="mr-2 w-5 text-center fas fa-times-circle text-red-500"></i> Có từ khóa (tags)</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-lg shadow">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Ảnh đại diện</h2>
                 <input type="hidden" name="thumbnail" x-model="featuredImageUrl">
                 <!-- phần hiển thị ảnh giữ nguyên -->
 
@@ -92,12 +158,15 @@
                         <input type="hidden" name="thumbnail" x-model="featuredImageUrl">
                     </div>
                 </div>
-
-
             </div>
-
-
-        
+            
+            <div class="bg-white p-5 rounded-lg shadow">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Tags (Từ khóa)</h2>
+                <div>
+                    <input type="text" id="tags" name="tags" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" placeholder="Ví dụ: ra mắt, cập nhật, hướng dẫn" value="<?= esc($edit_news->tags ?? '') ?>">
+                    <p class="text-xs text-gray-500 mt-1">Phân cách các từ khóa bằng dấu phẩy (,).</p>
+                </div>
+            </div>
 
             <div class="bg-gray-50 p-4 rounded-lg shadow space-y-4">
                 <label>Meta Title</label>
@@ -136,18 +205,39 @@
     </div>
 
     <?= form_close() ?>
+    <!-- Nhúng modal file manager -->
     <div x-html="modalHtml" x-cloak></div>
 </div>
 <?php if(isset($news) && !empty($news['id'])): ?>
 <?= $this->include('B/components/entity_sections_link', [
     'entityType' => 'news',
     'entityId' => $news['id'],
-    'entityName' => $news['title']
+    'entityName' => isset($news['title']) ? $news['title'] : 'Tin tức'
 ]) ?>
 <?php endif; ?>
 <?= $this->endSection() ?>
 <?= $this->section('script') ?>
-<script src="<?php echo  base_url('tinymce/js/tinymce/tinymce.min.js') ?>"></script>
-<script src="<?php echo  base_url('B/lib/fancybox/dist/jquery.fancybox.js') ?>"></script>
+<link rel="stylesheet" href="<?php echo  base_url('B/assets/css/custom-rich-editor.css') ?>">
+<script src="<?php echo  base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
 <script src="<?php echo  base_url('B/assets/js/handle.js') ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Khởi tạo custom rich editor cho nội dung tiếng Việt
+    const editorVi = initCustomRichEditor('#editor', {
+        height: 400,
+        placeholder: 'Soạn thảo nội dung bài viết...'
+    });
+    
+    // Khởi tạo custom rich editor cho nội dung tiếng Anh
+    const editorEn = initCustomRichEditor('#editor1', {
+        height: 300,
+        placeholder: 'Soạn thảo nội dung bài viết...'
+    });
+
+    window.editors = {
+        '#editor': editorVi,
+        '#editor1': editorEn
+    };
+});
+</script>
 <?= $this->endSection() ?>

@@ -1,7 +1,24 @@
 <?= $this->extend('B/master') ?>
 <?= $this->section('content') ?>
 <?php helper('form'); ?>
-<div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)">
+<div x-data="newsFormData()" 
+     @select-image.window="
+        if ($event.detail.target === 'wysiwyg-vi') {
+            // Chèn ảnh vào editor
+            const images = $event.detail.images || [];
+            
+            images.forEach(image => {
+                const imageUrl = image.url || image;
+                
+                if (window.editors && window.editors['#editor']) {
+                    insertImageToCustomEditor(window.editors['#editor'], imageUrl);
+                }
+            });
+            
+        } else {
+            handleImageSelection($event.detail);
+        }
+     ">
     <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
         <?=$title?>
     </h1>
@@ -23,16 +40,11 @@
                     </div>
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Nội dung <span class="text-red-500">*</span></label>
-                        <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5" @click="
-                            window.targetTinyEditorId = 'editor';
-                            selectionTarget = 'wysiwyg';
-                            selectionMode = 'multiple'; // 👈 Sửa từ 'single' thành 'multiple'
-                            selectedModalImages = [];
-                            showFileManager = true;
-                        ">
+                        <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5" @click="openFileManager('wysiwyg-vi')">
                             <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
                         </button>
-                        <textarea id="editor" name="content" rows="35" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung bài viết..."></textarea>
+                        <textarea id="editor" name="content" rows="35" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base wysiwyg-placeholder" placeholder="Soạn thảo nội dung dự án..." style="display: none;"></textarea>
+                        <div id="custom-editor-container"></div>
                     </div>
                 </div>
             </div>
@@ -267,6 +279,20 @@
 </div>
 <?= $this->endSection() ?>
 <?= $this->section('script') ?>
-<script src="<?php echo  base_url('tinymce/js/tinymce/tinymce.min.js') ?>"></script>
+<link rel="stylesheet" href="<?php echo  base_url('B/assets/css/custom-rich-editor.css') ?>">
+<script src="<?php echo  base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
 <script src="<?php echo  base_url('B/assets/js/handle.js') ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Khởi tạo custom rich editor cho nội dung
+    const editor = initCustomRichEditor('#editor', {
+        height: 400,
+        placeholder: 'Soạn thảo nội dung dự án...'
+    });
+
+    window.editors = {
+        '#editor': editor
+    };
+});
+</script>
 <?= $this->endSection() ?>

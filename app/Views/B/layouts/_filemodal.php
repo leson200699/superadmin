@@ -74,6 +74,7 @@ document.addEventListener('alpine:init', () => {
         // --- Mở modal ảnh
         openFileManager(target) {
             this.selectionTarget = target;
+            // Set multiple cho gallery và wysiwyg targets, single cho featured
             this.selectionMode = (target === 'featured') ? 'single' : 'multiple';
             this.selectedModalImages = [];
             this.showFileManager = true;

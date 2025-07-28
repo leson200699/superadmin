@@ -34,6 +34,9 @@ $sectionsJson = htmlspecialchars(json_encode($sections), ENT_QUOTES, 'UTF-8');
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Nội dung</label>
+                        <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5" @click="openFileManager('wysiwyg-vi')">
+                            <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
+                        </button>
                         <textarea id="editor" name="content" rows="35" class="w-full ..."><?= esc($landing['content']) ?></textarea>
                     </div>
                 </div>
@@ -278,7 +281,17 @@ document.addEventListener('alpine:init', () => {
 </script>
 <?= $this->endSection() ?>
 <?= $this->section('script') ?>
-<script src="<?php echo  base_url('tinymce/js/tinymce/tinymce.min.js') ?>"></script>
-<script src="<?php echo  base_url('B/lib/fancybox/dist/jquery.fancybox.js') ?>"></script>
-<script src="<?php echo  base_url('B/assets/js/handle.js') ?>"></script>
+<script src="<?php echo base_url('B/assets/js/file_modal.js') ?>"></script>
+<script src="<?php echo base_url('B/assets/js/custom-rich-editor.js') ?>"></script>
+<script src="<?php echo base_url('B/lib/fancybox/dist/jquery.fancybox.js') ?>"></script>
+<script src="<?php echo base_url('B/assets/js/handle.js') ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize custom editor
+    initCustomRichEditor('#editor', {
+        height: 400,
+        placeholder: 'Nhập nội dung trang tùy chỉnh...'
+    });
+});
+</script>
 <?= $this->endSection() ?>

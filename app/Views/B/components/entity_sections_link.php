@@ -6,6 +6,11 @@
  * @param int $entityId ID của entity
  * @param string $entityName Tên hiển thị của entity
  */
+
+// Đảm bảo có giá trị mặc định cho tất cả các biến
+$entityName = $entityName ?? $entityType ?? 'Entity';
+$entityType = $entityType ?? 'unknown';
+$entityId = $entityId ?? 0;
 ?>
 
 <div class="mt-4 mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4">

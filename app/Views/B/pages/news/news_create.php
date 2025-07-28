@@ -1,7 +1,38 @@
 <?= $this->extend('B/master') ?>
 <?= $this->section('content') ?>
 <?php helper('form'); ?>
-<div x-data="newsFormData()" @select-image.window="handleImageSelection($event.detail)">
+<div x-data="newsFormData()" 
+     @select-image.window="
+        if ($event.detail.target === 'wysiwyg-vi') {
+            // Chèn ảnh chỉ vào editor tiếng Việt
+            const images = $event.detail.images || [];
+            
+            images.forEach(image => {
+                const imageUrl = image.url || image;
+                
+                // Chỉ chèn vào editor tiếng Việt
+                if (window.editors && window.editors['#editor']) {
+                    insertImageToCustomEditor(window.editors['#editor'], imageUrl);
+                }
+            });
+            
+        } else if ($event.detail.target === 'wysiwyg-en') {
+            // Chèn ảnh chỉ vào editor tiếng Anh
+            const images = $event.detail.images || [];
+            
+            images.forEach(image => {
+                const imageUrl = image.url || image;
+                
+                // Chỉ chèn vào editor tiếng Anh
+                if (window.editors && window.editors['#editor1']) {
+                    insertImageToCustomEditor(window.editors['#editor1'], imageUrl);
+                }
+            });
+            
+        } else {
+            handleImageSelection($event.detail);
+        }
+     ">
     <h1 class="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
         <?=$title?>
     </h1>
@@ -40,7 +71,7 @@
 
                     <button type="button"
                       class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                      @click="openFileManager('wysiwyg'); window.targetCustomEditorId = '#editor'">
+                      @click="openFileManager('wysiwyg-vi')">
                       <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung
                     </button>
 
@@ -66,7 +97,7 @@
 
                             <button type="button"
                       class="bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mb-5"
-                      @click="openFileManager('wysiwyg'); window.targetCustomEditorId = '#editor1'">
+                      @click="openFileManager('wysiwyg-en')">
                       <i class="fas fa-image mr-3 w-5 text-center group-hover:text-gray-600"></i> Chèn ảnh vào nội dung [en]
                     </button>
 
@@ -237,6 +268,11 @@ document.addEventListener('DOMContentLoaded', function() {
         height: 300,
         placeholder: 'Soạn thảo nội dung bài viết...'
     });
+
+    window.editors = {
+        '#editor': editorVi,
+        '#editor1': editorEn
+    };
 });
 </script>
 

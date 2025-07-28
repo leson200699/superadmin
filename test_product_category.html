@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Product Category Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Custom Rich Editor Styles */
+        .custom-rich-editor-container {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .custom-rich-editor-toolbar {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            gap: 0.25rem;
+            padding-right: 0.5rem;
+            border-right: 1px solid #d1d5db;
+        }
+        
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+        
+        .toolbar-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toolbar-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        .toolbar-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        .custom-rich-editor {
+            min-height: 200px;
+            padding: 1rem;
+            outline: none;
+            line-height: 1.6;
+        }
+        
+        .custom-rich-editor:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .custom-rich-editor:empty::before {
+            content: attr(placeholder);
+            color: #9ca3af;
+            font-style: italic;
+        }
+        
+        .custom-rich-editor img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="bg-blue-600 text-white p-6">
+            <h1 class="text-2xl font-bold">Test Product Category Management</h1>
+            <p class="text-blue-100 mt-2">Demo tính năng quản lý danh mục sản phẩm đã được nâng cấp</p>
+        </div>
+        
+        <div class="p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Create Form Demo -->
+                <div class="space-y-6">
+                    <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Create Category Form</h2>
+                    
+                    <div x-data="categoryDemoData()" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tên danh mục <span class="text-red-500">*</span></label>
+                            <input type="text" 
+                                   x-model="categoryName"
+                                   @input="generateSlug()"
+                                   class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base" 
+                                   placeholder="Nhập tên danh mục...">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Slug (URL thân thiện)</label>
+                            <input type="text" 
+                                   x-model="categorySlug"
+                                   class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-base bg-gray-50" 
+                                   readonly>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Danh mục cha</label>
+                            <select class="w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 text-base">
+                                <option value="">-- Chọn danh mục cha --</option>
+                                <option value="1">Điện tử</option>
+                                <option value="2">Thời trang</option>
+                                <option value="3">Nhà cửa & Đời sống</option>
+                                <option value="4">Sách & Văn phòng phẩm</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tóm tắt</label>
+                            <textarea class="w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 text-base" 
+                                      rows="3"
+                                      placeholder="Tóm tắt ngắn về danh mục..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nội dung</label>
+                            <div class="custom-rich-editor-container">
+                                <div class="custom-rich-editor-toolbar">
+                                    <div class="toolbar-group">
+                                        <button type="button" class="toolbar-btn" title="Đậm">
+                                            <i class="fas fa-bold"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" title="Nghiêng">
+                                            <i class="fas fa-italic"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" title="Gạch chân">
+                                            <i class="fas fa-underline"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="toolbar-group">
+                                        <button type="button" class="toolbar-btn" title="Danh sách có số">
+                                            <i class="fas fa-list-ol"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" title="Danh sách không số">
+                                            <i class="fas fa-list-ul"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="toolbar-group">
+                                        <button type="button" class="toolbar-btn" title="Căn trái">
+                                            <i class="fas fa-align-left"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" title="Căn giữa">
+                                            <i class="fas fa-align-center"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" title="Căn phải">
+                                            <i class="fas fa-align-right"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="toolbar-group">
+                                        <button type="button" class="toolbar-btn" @click="insertSampleImage()" title="Chèn ảnh">
+                                            <i class="fas fa-image"></i>
+                                        </button>
+                                        <button type="button" class="toolbar-btn" title="Chèn ảnh từ URL">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="toolbar-group">
+                                        <button type="button" class="toolbar-btn" title="Xem mã HTML">
+                                            <i class="fas fa-code"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="custom-rich-editor" 
+                                     contenteditable="true" 
+                                     placeholder="Nhập nội dung mô tả danh mục..."
+                                     x-ref="editor">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh đại diện</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                    <div x-show="!featuredImage" class="text-gray-500">
+                                        <i class="fas fa-image text-2xl mb-2"></i>
+                                        <p class="text-sm">Chưa chọn ảnh</p>
+                                        <button type="button" @click="selectSampleImage('featured')" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded text-sm">
+                                            Chọn ảnh demo
+                                        </button>
+                                    </div>
+                                    <div x-show="featuredImage" class="relative">
+                                        <img :src="featuredImage" class="max-w-full h-32 object-cover rounded mx-auto">
+                                        <button @click="featuredImage = ''" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Thư viện ảnh</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                    <div x-show="galleryImages.length === 0" class="text-gray-500">
+                                        <i class="fas fa-images text-2xl mb-2"></i>
+                                        <p class="text-sm">Chưa có ảnh nào</p>
+                                        <button type="button" @click="addGalleryImages()" class="mt-2 bg-green-600 text-white px-4 py-2 rounded text-sm">
+                                            Thêm ảnh demo
+                                        </button>
+                                    </div>
+                                    <div x-show="galleryImages.length > 0" class="grid grid-cols-3 gap-2">
+                                        <template x-for="(image, index) in galleryImages" :key="index">
+                                            <div class="relative">
+                                                <img :src="image" class="w-full h-16 object-cover rounded">
+                                                <button @click="galleryImages.splice(index, 1)" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <button x-show="galleryImages.length > 0" @click="galleryImages = []" class="mt-2 text-red-600 text-sm">
+                                        Xóa tất cả
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+                                Hủy
+                            </button>
+                            <button type="button" @click="submitDemo()" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors">
+                                <i class="fas fa-save mr-2"></i>
+                                Lưu danh mục
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Demo -->
+                <div class="space-y-6">
+                    <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Features Demo</h2>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h3 class="font-medium text-green-800 mb-2">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Custom Rich Editor
+                            </h3>
+                            <p class="text-green-700 text-sm">Modern WYSIWYG editor thay thế TinyMCE cũ</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 class="font-medium text-blue-800 mb-2">
+                                <i class="fas fa-mobile-alt mr-2"></i>
+                                Responsive Design
+                            </h3>
+                            <p class="text-blue-700 text-sm">Giao diện responsive hoạt động mượt mà trên mọi thiết bị</p>
+                        </div>
+                        
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h3 class="font-medium text-purple-800 mb-2">
+                                <i class="fas fa-images mr-2"></i>
+                                Advanced Image Management
+                            </h3>
+                            <p class="text-purple-700 text-sm">File manager hiện đại với preview và multiple selection</p>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h3 class="font-medium text-yellow-800 mb-2">
+                                <i class="fas fa-link mr-2"></i>
+                                Auto Slug Generation
+                            </h3>
+                            <p class="text-yellow-700 text-sm">Tự động tạo slug SEO-friendly từ tên danh mục</p>
+                        </div>
+                        
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                            <h3 class="font-medium text-indigo-800 mb-2">
+                                <i class="fas fa-cogs mr-2"></i>
+                                Alpine.js Integration
+                            </h3>
+                            <p class="text-indigo-700 text-sm">State management hiện đại và reactive UI</p>
+                        </div>
+                        
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h3 class="font-medium text-red-800 mb-2">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                Enhanced Validation
+                            </h3>
+                            <p class="text-red-700 text-sm">Validation real-time với feedback rõ ràng</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-800 mb-3">Comparison với version cũ:</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="text-red-600">❌ TinyMCE cũ</span>
+                                <span class="text-green-600">✅ Custom Rich Editor</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-red-600">❌ Bootstrap cũ</span>
+                                <span class="text-green-600">✅ Tailwind CSS hiện đại</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-red-600">❌ Basic file upload</span>
+                                <span class="text-green-600">✅ Advanced file manager</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-red-600">❌ Static forms</span>
+                                <span class="text-green-600">✅ Dynamic Alpine.js</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-red-600">❌ Limited mobile support</span>
+                                <span class="text-green-600">✅ Fully responsive</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('categoryDemoData', () => ({
+        categoryName: '',
+        categorySlug: '',
+        featuredImage: '',
+        galleryImages: [],
+        
+        generateSlug() {
+            this.categorySlug = this.categoryName
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+                .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-') // Replace multiple hyphens with single
+                .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+        },
+        
+        selectSampleImage(type) {
+            const sampleImages = [
+                'https://picsum.photos/400/300?random=1',
+                'https://picsum.photos/400/300?random=2',
+                'https://picsum.photos/400/300?random=3',
+                'https://picsum.photos/400/300?random=4',
+                'https://picsum.photos/400/300?random=5'
+            ];
+            
+            if (type === 'featured') {
+                this.featuredImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+            }
+        },
+        
+        addGalleryImages() {
+            const sampleImages = [
+                'https://picsum.photos/200/150?random=6',
+                'https://picsum.photos/200/150?random=7',
+                'https://picsum.photos/200/150?random=8'
+            ];
+            this.galleryImages = [...sampleImages];
+        },
+        
+        insertSampleImage() {
+            const editor = this.$refs.editor;
+            const img = document.createElement('img');
+            img.src = 'https://picsum.photos/600/400?random=' + Math.floor(Math.random() * 100);
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            editor.appendChild(img);
+        },
+        
+        submitDemo() {
+            alert('🎉 Demo submitted successfully!\n\nIn real application, this would:\n• Validate form data\n• Submit to backend\n• Show loading states\n• Handle success/error responses');
+        }
+    }));
+});
+</script>
+
+</body>
+</html>

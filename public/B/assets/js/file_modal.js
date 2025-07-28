@@ -104,6 +104,7 @@ document.addEventListener('alpine:init', () => {
 
         openFileManager(target) {
             this.selectionTarget = target;
+            // Set multiple cho gallery và wysiwyg targets, single cho featured
             this.selectionMode = (target === 'featured') ? 'single' : 'multiple';
             this.selectedModalImages = [];
             this.loadFiles('');  // load folder gốc
@@ -160,6 +161,8 @@ document.addEventListener('alpine:init', () => {
                 case 'gallery':
                     this.galleryImageUrls = images.map(i => i.url);
                     break;
+                case 'wysiwyg-vi':
+                case 'wysiwyg-en':
                 case 'wysiwyg':
                     window.dispatchEvent(new CustomEvent("insert-image-from-modal", {
                         detail: {
